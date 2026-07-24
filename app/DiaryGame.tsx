@@ -14,11 +14,19 @@ type Entry = {
   segments: Segment[];
 };
 
+type PageTrace = {
+  id: string;
+  title: string;
+  text: string;
+  thought: string;
+};
+
 type ReadingPage = {
   kind: "reading";
   id: string;
   chapter: string;
   margin: string;
+  trace?: PageTrace;
   entries: Entry[];
 };
 
@@ -67,6 +75,7 @@ type SavedGame = {
   endingStep?: number;
   crossedLines?: string[];
   finalChoice?: FinalChoice | null;
+  revealedTraces?: string[];
 };
 
 const STORAGE_KEY = "last-three-pages-diary-v1";
@@ -112,6 +121,8 @@ const finalChoices: Record<
   },
 };
 
+const TRACE_TOTAL = 6;
+
 const pages: GamePage[] = [
   {
     kind: "front",
@@ -122,6 +133,12 @@ const pages: GamePage[] = [
     id: "voice-a",
     chapter: "第一册｜她如何说话",
     margin: "本页目标：摘录顾澄对弟弟和父亲的固定称呼。",
+    trace: {
+      id: "trace-erased-boat",
+      title: "擦掉的第二句话",
+      text: "页角那条歪船下面还压着一行极浅的铅笔印：“如果我没有跟上，你就一直往前。”这句话后来被橡皮擦过。",
+      thought: "十月三日，她就已经在练习怎样让小船独自离开。",
+    },
     entries: [
       {
         date: "2004年10月3日",
@@ -341,6 +358,12 @@ const pages: GamePage[] = [
     id: "lock-a",
     chapter: "第二册｜门为什么打不开",
     margin: "本页目标：摘录锁舌朝向，以及方岚人在房内的直接证据。",
+    trace: {
+      id: "trace-three-dents",
+      title: "纸背上的三处凹点",
+      text: "“敲了三下门”下面，纸纤维被笔尖顶出三个小洞。第三个洞旁边有一滴已经干透的水渍。",
+      thought: "她把害怕写得很轻，笔却没有。",
+    },
     entries: [
       {
         date: "2004年10月16日",
@@ -449,6 +472,12 @@ const pages: GamePage[] = [
     id: "lock-c",
     chapter: "第二册｜门为什么打不开",
     margin: "本页目标：验证门是否可能从里面反锁；相近证据同样有效。",
+    trace: {
+      id: "trace-half-hai",
+      title: "装订线里的半个字",
+      text: "十月二十五日前一页靠近装订线处残着蓝色复写纸的碎屑，上面只剩半个“海”字。像有什么曾被夹在这里，又被抽走。",
+      thought: "顾明海翻过日记。他可能比十一月十八日更早知道她们要去哪。",
+    },
     entries: [
       {
         date: "2004年10月23日",
@@ -722,6 +751,12 @@ const pages: GamePage[] = [
     id: "leave-d",
     chapter: "第三册｜她们要去哪里",
     margin: "本页目标：找到具体日期，并用顾明海的作息解释为何选择这一天。",
+    trace: {
+      id: "trace-red-date",
+      title: "十九号下面的第二个记号",
+      text: "挂历红点的拓痕旁，还能辨出三个很小的“走”字。最后一个字落笔太重，把纸面划破了。",
+      thought: "她不只是在记日期。她在说服自己，那一天真的会来。",
+    },
     entries: [
       {
         date: "2004年11月13日",
@@ -803,6 +838,12 @@ const pages: GamePage[] = [
     id: "last-a",
     chapter: "第四册｜十一月十八日",
     margin: "本页目标：摘录顾明海提前回家、方岚被带回卧室，以及取暖器发生的异常。",
+    trace: {
+      id: "trace-torn-order",
+      title: "被撕去的一小角",
+      text: "正文结束后的纸边缺了一角。相邻页的压痕里只能辨出：“小船，如果门开了——”后半句已经不在这里。",
+      thought: "这不像遗书，更像一条来不及写完的逃生指令。",
+    },
     entries: [
       {
         date: "2004年11月18日",
@@ -842,6 +883,12 @@ const pages: GamePage[] = [
     id: "last-b",
     chapter: "第五册｜最后三页",
     margin: "本页目标：逐个比较父亲、弟弟、取暖器的称呼是否改变。",
+    trace: {
+      id: "trace-new-ink-fold",
+      title: "墨水跨不过旧折痕",
+      text: "最后三页似乎先被折过，后来才写字。新墨经过旧折痕时断成细小白线，说明这些字落下时，纸页早已不在原来的位置。",
+      thought: "这三页不只是后来写的。它们可能曾被抽走，又在火后夹回日记。",
+    },
     entries: [
       {
         date: "2004年11月19日",
@@ -1023,6 +1070,51 @@ function satisfiesEvidenceGroups(pinned: string[], groups: string[][]) {
   return matchGroup(0, new Set());
 }
 
+function getReaderInnerVoice(
+  page: GamePage,
+  completed: string[],
+  revealedTraceCount: number,
+  finalComplete: boolean,
+) {
+  if (finalComplete) {
+    return "我已经知道最后三页是谁写的。现在真正难的，是决定该让谁的话留到最后。";
+  }
+
+  if (page.kind === "front") {
+    return "我还不知道顾澄是谁。可末三页墨色较新——有人希望我先读到结局。";
+  }
+
+  if (page.kind === "deduction") {
+    return completed.includes(page.id)
+      ? page.reflection
+      : "别急着解释。先让日记里的原句彼此作证，结论不能走在证据前面。";
+  }
+
+  if (page.kind === "final") {
+    return "我不是在替顾澄猜一个更好听的结局。我只需要证明，现有的结局不属于她。";
+  }
+
+  if (page.id.startsWith("voice")) {
+    return revealedTraceCount > 0
+      ? "她给每样东西另起名字，也提前给小船留了一条只往前走的路。"
+      : "先记住她怎样说话。一个人的用词，比模仿出来的笔迹更难伪造。";
+  }
+
+  if (page.id.startsWith("lock")) {
+    return "敲门、电视声、右边裤袋里的钥匙。恐惧在这些日常细节里，比在尖叫里更清楚。";
+  }
+
+  if (page.id.startsWith("leave")) {
+    return "我开始替她们计算那十八分钟：三个人、两层楼、一条不能回头的路。";
+  }
+
+  if (page.id === "last-a") {
+    return "她写下的是明天的车，不是今晚的火。可这一页的最后一句，被人撕走了一部分。";
+  }
+
+  return "这些句子太完整、太平静、太急着替某个人开脱。它们更像口供，不像日记。";
+}
+
 export default function DiaryGame() {
   const [opened, setOpened] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -1037,6 +1129,8 @@ export default function DiaryGame() {
   const [endingStep, setEndingStep] = useState(0);
   const [crossedLines, setCrossedLines] = useState<string[]>([]);
   const [finalChoice, setFinalChoice] = useState<FinalChoice | null>(null);
+  const [revealedTraces, setRevealedTraces] = useState<string[]>([]);
+  const [openTrace, setOpenTrace] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [resetArmed, setResetArmed] = useState(false);
   const [today, setToday] = useState("");
@@ -1052,7 +1146,31 @@ export default function DiaryGame() {
           : 0;
   const activePuzzle =
     page.kind === "deduction" || page.kind === "final" ? page : null;
+  const pageLabel =
+    page.kind === "front"
+      ? "扉页"
+      : page.kind === "final"
+        ? "最终结论"
+        : page.chapter;
+  const readerInnerVoice = getReaderInnerVoice(
+    page,
+    completed,
+    revealedTraces.length,
+    finalComplete,
+  );
+  const hasReadingProgress =
+    currentPage > 0 || collected.length > 0 || completed.length > 0;
+  const closedBookMood = finalComplete
+    ? "封底比刚才更暖。你不确定是不是自己手心的温度。"
+    : tensionLevel >= 3
+      ? "合上以后，最后三页仍在封皮下面发出轻微的纸响。"
+      : tensionLevel >= 2
+        ? "雨声重新变大了。书签停在她们准备离开的那一页。"
+        : tensionLevel >= 1
+          ? "封面下面像有人用指节，很轻地敲了三下。"
+          : "书合上了，但那股潮湿的纸味没有散。";
 
+  /* eslint-disable react-hooks/set-state-in-effect -- one-time hydration from device-local save data */
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -1084,6 +1202,17 @@ export default function DiaryGame() {
             ? saved.finalChoice
             : null,
         );
+        setRevealedTraces(
+          Array.isArray(saved.revealedTraces)
+            ? saved.revealedTraces.filter((id) =>
+                pages.some(
+                  (candidate) =>
+                    candidate.kind === "reading" &&
+                    candidate.trace?.id === id,
+                ),
+              )
+            : [],
+        );
       }
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -1098,6 +1227,7 @@ export default function DiaryGame() {
       setHydrated(true);
     }
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!hydrated) return;
@@ -1113,6 +1243,7 @@ export default function DiaryGame() {
       endingStep,
       crossedLines,
       finalChoice,
+      revealedTraces,
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
   }, [
@@ -1126,6 +1257,7 @@ export default function DiaryGame() {
     endingStep,
     crossedLines,
     finalChoice,
+    revealedTraces,
     hydrated,
   ]);
 
@@ -1137,6 +1269,7 @@ export default function DiaryGame() {
     setMessage("");
     setPinned([]);
     setDrawerOpen(false);
+    setOpenTrace(null);
     setCurrentPage((value) => Math.max(0, value - 1));
   }, []);
 
@@ -1145,6 +1278,7 @@ export default function DiaryGame() {
     setMessage("");
     setPinned([]);
     setDrawerOpen(false);
+    setOpenTrace(null);
     setCurrentPage((value) => Math.min(pages.length - 1, value + 1));
   }, [canMoveForward]);
 
@@ -1262,7 +1396,7 @@ export default function DiaryGame() {
     setHintLevel((current) => ({ ...current, [id]: next }));
   }
 
-  function useCorrectEvidence(ids: string[]) {
+  function applyCorrectEvidence(ids: string[]) {
     setCollected((items) => Array.from(new Set([...items, ...ids])));
     setTags((current) => {
       const next = { ...current };
@@ -1279,6 +1413,18 @@ export default function DiaryGame() {
       items.includes(id)
         ? items.filter((item) => item !== id)
         : [...items, id],
+    );
+  }
+
+  function togglePageTrace(id: string) {
+    setRevealedTraces((items) =>
+      items.includes(id) ? items : [...items, id],
+    );
+    setOpenTrace((current) => (current === id ? null : id));
+    setMessage(
+      revealedTraces.includes(id)
+        ? ""
+        : "你顺着折角摸到了一层压痕。它不是答案，但改变了这页的读法。",
     );
   }
 
@@ -1308,6 +1454,8 @@ export default function DiaryGame() {
     setEndingStep(0);
     setCrossedLines([]);
     setFinalChoice(null);
+    setRevealedTraces([]);
+    setOpenTrace(null);
     setResetArmed(false);
   }
 
@@ -1327,24 +1475,42 @@ export default function DiaryGame() {
         <section className="closed-book" aria-labelledby="game-title">
           <div className="cover-wear cover-wear-one" />
           <div className="cover-wear cover-wear-two" />
+          <div className="cover-cord" aria-hidden="true" />
           <p className="cover-owner">顾澄</p>
           <h1 id="game-title">最后三页</h1>
           <p className="cover-years">2004 · 10 · 03 —</p>
-          <p className="cover-note">不是每一页日记，都由日记的主人写下。</p>
+          <p className="cover-note">
+            {hasReadingProgress
+              ? closedBookMood
+              : "不是每一页日记，都由日记的主人写下。"}
+          </p>
+          {hasReadingProgress && (
+            <div className="cover-bookmark" aria-label="保存的阅读进度">
+              <span>书签停在</span>
+              <strong>{pageLabel}</strong>
+              <small>
+                {progress}% · {collected.length} 条摘录 ·{" "}
+                {revealedTraces.length}/{TRACE_TOTAL} 处纸页痕迹
+              </small>
+            </div>
+          )}
           <button
             className="open-book-button"
             type="button"
             onClick={() => setOpened(true)}
           >
-            打开日记
+            {hasReadingProgress ? "从书签处继续" : "打开日记"}
           </button>
+          {hasReadingProgress && (
+            <p className="cover-save-note">合上日记不会清除任何记录</p>
+          )}
           <div className="cover-meta">
             <span>纯文字推理</span>
-            <span>约 45–70 分钟</span>
+            <span>约 50–80 分钟</span>
             <span>自动保存</span>
           </div>
         </section>
-        {(currentPage > 0 || collected.length > 0) && (
+        {hasReadingProgress && (
           <button className="reset-outside" type="button" onClick={resetGame}>
             {resetArmed ? "再次点击，清空全部阅读记录" : "从头阅读"}
           </button>
@@ -1367,22 +1533,46 @@ export default function DiaryGame() {
         <div className="book-toolbar" aria-label="日记工具">
           <button
             type="button"
-            onClick={() => setOpened(false)}
-            aria-label="合上日记"
+            className="corner-action close-book-action"
+            onClick={() => {
+              setDrawerOpen(false);
+              setOpenTrace(null);
+              setOpened(false);
+            }}
+            aria-label="合上日记并保存书签"
           >
-            合上
+            <span aria-hidden="true">↙</span>
+            <strong>合上日记</strong>
+            <small>自动夹入书签</small>
           </button>
-          <div className="reading-progress" aria-label={`阅读进度 ${progress}%`}>
-            <span style={{ width: `${progress}%` }} />
+          <div className="toolbar-progress">
+            <div className="progress-copy">
+              <span>{pageLabel}</span>
+              <b>{progress}%</b>
+            </div>
+            <div
+              className="reading-progress"
+              aria-label={`阅读进度 ${progress}%`}
+            >
+              <span style={{ width: `${progress}%` }} />
+            </div>
+            <p>
+              已完成 {completed.length}/4 次推理 · 发现{" "}
+              {revealedTraces.length}/{TRACE_TOTAL} 处纸页痕迹
+            </p>
           </div>
           <button
             type="button"
-            className={drawerOpen ? "active" : ""}
+            className={`corner-action evidence-action ${
+              drawerOpen ? "active" : ""
+            }`}
             onClick={() => setDrawerOpen((value) => !value)}
             aria-expanded={drawerOpen}
             aria-controls="evidence-drawer"
           >
-            页边摘录 <b>{collected.length}</b>
+            <span aria-hidden="true">↗</span>
+            <strong>页边摘录</strong>
+            <small>{collected.length} 条已收集</small>
           </button>
         </div>
 
@@ -1403,7 +1593,10 @@ export default function DiaryGame() {
               key={page.id}
               page={page}
               collected={collected}
+              revealedTraces={revealedTraces}
+              openTrace={openTrace}
               onToggle={toggleCollect}
+              onToggleTrace={togglePageTrace}
             />
           )}
 
@@ -1417,7 +1610,7 @@ export default function DiaryGame() {
               onSubmit={() => submitDeduction(page)}
               hintLevel={hintLevel[page.id] ?? 0}
               onHint={() => revealHint(page.id, page.hints)}
-              onUseAnswer={() => useCorrectEvidence(page.requiredIds)}
+              onUseAnswer={() => applyCorrectEvidence(page.requiredIds)}
             />
           )}
 
@@ -1435,7 +1628,7 @@ export default function DiaryGame() {
               onSubmit={submitFinal}
               hintLevel={hintLevel.final ?? 0}
               onHint={() => revealHint("final", page.hints)}
-              onUseAnswer={() => useCorrectEvidence(page.requiredIds)}
+              onUseAnswer={() => applyCorrectEvidence(page.requiredIds)}
               onSetEndingStep={setEndingStep}
               onToggleEndingLine={toggleEndingLine}
               onChooseFinal={setFinalChoice}
@@ -1459,30 +1652,69 @@ export default function DiaryGame() {
           )}
         </div>
 
+        <aside className="reader-presence" aria-live="polite">
+          <span>我在页边停了一下</span>
+          <p>{readerInnerVoice}</p>
+          {page.kind === "reading" &&
+            page.trace &&
+            !revealedTraces.includes(page.trace.id) && (
+              <small>这页右上角有一道不自然的折痕。</small>
+            )}
+        </aside>
+
         {page.kind !== "front" && (
           <div className="page-controls" aria-label="翻页">
             <button
               type="button"
+              className="nav-action previous-action"
               onClick={goPrevious}
               disabled={currentPage === 0}
               aria-label="上一页"
             >
-              ← 上一页
+              <span className="nav-arrow" aria-hidden="true">
+                ←
+              </span>
+              <span>
+                <small>回看线索</small>
+                <strong>上一页</strong>
+              </span>
+              <kbd>←</kbd>
             </button>
-            <span>
-              {isDeduction(page) && !completed.includes(page.id)
-                ? "完成页边推理后继续"
-                : page.kind === "final"
-                  ? "日记到这里结束"
-                  : "点击句子可摘录"}
-            </span>
+            <div className="control-guidance">
+              <span>
+                {isDeduction(page) && !completed.includes(page.id)
+                  ? "本页暂时不能继续"
+                  : page.kind === "final"
+                    ? "日记到这里结束"
+                    : "阅读提示"}
+              </span>
+              <strong>
+                {isDeduction(page) && !completed.includes(page.id)
+                  ? "完成页边推理，右侧书签才会松开"
+                  : page.kind === "final"
+                    ? "请完成最后的证据结论"
+                    : "点击正文中的任何句子，都可以收入摘录"}
+              </strong>
+            </div>
             <button
               type="button"
+              className="nav-action next-action"
               onClick={goNext}
               disabled={!canMoveForward}
               aria-label="下一页"
             >
-              下一页 →
+              <kbd>→</kbd>
+              <span>
+                <small>
+                  {isDeduction(page) && !completed.includes(page.id)
+                    ? "推理未完成"
+                    : "继续阅读"}
+                </small>
+                <strong>下一页</strong>
+              </span>
+              <span className="nav-arrow" aria-hidden="true">
+                →
+              </span>
             </button>
           </div>
         )}
@@ -1537,6 +1769,7 @@ function Frontispiece({
             <li>点击任何一句你认为重要的话，把它抄入页边摘录。</li>
             <li>前后翻页，比较时间、称呼和互相矛盾的说法。</li>
             <li>在推理页选择原文作为证据。结论不能超过证据。</li>
+            <li>带折角的纸页藏有压痕。它们不参与答题，只会让故事更完整。</li>
             <li>提示按“方向—日期—正确摘录”递进，第三层可直接使用答案。</li>
           </ol>
         </div>
@@ -1554,16 +1787,50 @@ function Frontispiece({
 function ReadingSpread({
   page,
   collected,
+  revealedTraces,
+  openTrace,
   onToggle,
+  onToggleTrace,
 }: {
   page: ReadingPage;
   collected: string[];
+  revealedTraces: string[];
+  openTrace: string | null;
   onToggle: (id: string) => void;
+  onToggleTrace: (id: string) => void;
 }) {
+  const traceRevealed = Boolean(
+    page.trace && revealedTraces.includes(page.trace.id),
+  );
+  const traceOpen = Boolean(page.trace && openTrace === page.trace.id);
+
   return (
     <div className="reading-spread">
       <p className="chapter-label">{page.chapter}</p>
       <p className="margin-instruction">{page.margin}</p>
+      {page.trace && (
+        <div className={`page-trace ${traceOpen ? "open" : ""}`}>
+          <button
+            className={`trace-corner ${traceRevealed ? "discovered" : ""}`}
+            type="button"
+            onClick={() => onToggleTrace(page.trace!.id)}
+            aria-expanded={traceOpen}
+          >
+            <span aria-hidden="true">{traceRevealed ? "⌁" : "!"}</span>
+            <strong>{traceRevealed ? "纸页痕迹" : "翻开折角"}</strong>
+            <small>{traceOpen ? "收起" : traceRevealed ? "再次查看" : "这里不太平整"}</small>
+          </button>
+          {traceOpen && (
+            <aside className="trace-note" aria-live="polite">
+              <p className="trace-label">纸页本身留下的线索</p>
+              <h3>{page.trace.title}</h3>
+              <p>{page.trace.text}</p>
+              <blockquote>{page.trace.thought}</blockquote>
+              <small>这类痕迹不进入证据摘录，也不增加答题条件。</small>
+            </aside>
+          )}
+        </div>
+      )}
       <div className="entries-grid">
         {page.entries.map((entry) => (
           <article className="diary-entry" key={`${page.id}-${entry.date}`}>

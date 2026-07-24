@@ -48,5 +48,9 @@ test("the diary contains the complete evidence and conclusion loop", async () =>
   assert.match(source, /划掉伪造的结局/);
   assert.match(source, /不要回来。不是你丢下我/);
   assert.match(source, /重新读一次结局/);
+  assert.match(source, /trace-erased-boat/);
+  assert.match(source, /trace-new-ink-fold/);
+  assert.match(source, /从书签处继续/);
+  assert.match(source, /我在页边停了一下/);
   assert.match(source, /last-three-pages-diary-v1/);
 });

@@ -9,7 +9,7 @@ const origin = isGitHubPages
     ? `https://${repositoryOwner}.github.io`
     : `https://${repositoryOwner}.github.io/${repositoryName}`
   : "https://last-three-pages.sakurazou792501.chatgpt.site";
-const image = `${origin}/og.png`;
+const image = `${origin}/og-diary-trace.png`;
 
 export const metadata: Metadata = {
   title: {
