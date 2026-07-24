@@ -69,7 +69,6 @@ type SavedGame = {
   currentPage: number;
   collected: string[];
   completed: string[];
-  tags: Record<string, string>;
   hintLevel?: Record<string, number>;
   finalComplete: boolean;
   endingStep?: number;
@@ -79,8 +78,6 @@ type SavedGame = {
 };
 
 const STORAGE_KEY = "last-three-pages-diary-v1";
-
-const tagOptions = ["未分类", "称呼", "时间", "门锁", "离开计划", "异常措辞"];
 
 const endingLines = [
   {
@@ -1120,7 +1117,6 @@ export default function DiaryGame() {
   const [currentPage, setCurrentPage] = useState(0);
   const [collected, setCollected] = useState<string[]>([]);
   const [completed, setCompleted] = useState<string[]>([]);
-  const [tags, setTags] = useState<Record<string, string>>({});
   const [pinned, setPinned] = useState<string[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -1182,7 +1178,6 @@ export default function DiaryGame() {
         );
         setCollected(Array.isArray(saved.collected) ? saved.collected : []);
         setCompleted(Array.isArray(saved.completed) ? saved.completed : []);
-        setTags(saved.tags ?? {});
         setHintLevel(saved.hintLevel ?? {});
         setFinalComplete(Boolean(saved.finalComplete));
         setEndingStep(
@@ -1237,7 +1232,6 @@ export default function DiaryGame() {
       currentPage,
       collected,
       completed,
-      tags,
       hintLevel,
       finalComplete,
       endingStep,
@@ -1251,7 +1245,6 @@ export default function DiaryGame() {
     currentPage,
     collected,
     completed,
-    tags,
     hintLevel,
     finalComplete,
     endingStep,
@@ -1317,7 +1310,6 @@ export default function DiaryGame() {
     }
 
     setCollected((items) => [...items, id]);
-    setTags((current) => ({ ...current, [id]: current[id] ?? "未分类" }));
     setMessage("已将这句话抄到页边摘录。");
   }
 
@@ -1398,11 +1390,6 @@ export default function DiaryGame() {
 
   function applyCorrectEvidence(ids: string[]) {
     setCollected((items) => Array.from(new Set([...items, ...ids])));
-    setTags((current) => {
-      const next = { ...current };
-      for (const id of ids) next[id] ??= "未分类";
-      return next;
-    });
     setPinned(ids);
     setDrawerOpen(false);
     setMessage("正确摘录已放入当前推理；你仍需要亲手确认并形成结论。");
@@ -1445,7 +1432,6 @@ export default function DiaryGame() {
     setCurrentPage(0);
     setCollected([]);
     setCompleted([]);
-    setTags({});
     setPinned([]);
     setDrawerOpen(false);
     setMessage("");
@@ -1695,16 +1681,12 @@ export default function DiaryGame() {
         <EvidenceDrawer
           open={drawerOpen}
           collected={collected}
-          tags={tags}
           pinned={pinned}
           maxPins={activePuzzle?.maxPins ?? 0}
           puzzleActive={Boolean(activePuzzle) && !finalComplete}
           onClose={() => setDrawerOpen(false)}
           onTogglePin={togglePin}
           onRemove={toggleCollect}
-          onTag={(id, tag) =>
-            setTags((current) => ({ ...current, [id]: tag }))
-          }
         />
       </section>
     </main>
@@ -2287,26 +2269,33 @@ function HintGuide({
 function EvidenceDrawer({
   open,
   collected,
-  tags,
   pinned,
   maxPins,
   puzzleActive,
   onClose,
   onTogglePin,
   onRemove,
-  onTag,
 }: {
   open: boolean;
   collected: string[];
-  tags: Record<string, string>;
   pinned: string[];
   maxPins: number;
   puzzleActive: boolean;
   onClose: () => void;
   onTogglePin: (id: string) => void;
   onRemove: (id: string) => void;
-  onTag: (id: string, tag: string) => void;
 }) {
+  const orderedCollected = puzzleActive
+    ? [...collected].sort((left, right) => {
+        const leftIndex = pinned.indexOf(left);
+        const rightIndex = pinned.indexOf(right);
+        if (leftIndex >= 0 && rightIndex >= 0) return leftIndex - rightIndex;
+        if (leftIndex >= 0) return -1;
+        if (rightIndex >= 0) return 1;
+        return collected.indexOf(left) - collected.indexOf(right);
+      })
+    : collected;
+
   return (
     <aside
       id="evidence-drawer"
@@ -2319,8 +2308,8 @@ function EvidenceDrawer({
           <p>页边摘录</p>
           <span>
             {puzzleActive
-              ? `为当前推理选择 ${maxPins} 条`
-              : "点击日记中的句子进行摘录"}
+              ? `当前推理已选 ${pinned.length}/${maxPins} 条；已选内容会排到前面`
+              : "原句会按阅读时的摘录顺序自动保存"}
           </span>
         </div>
         <button type="button" onClick={onClose} aria-label="收起页边摘录">
@@ -2335,10 +2324,11 @@ function EvidenceDrawer({
         </div>
       ) : (
         <div className="evidence-list">
-          {collected.map((id) => {
+          {orderedCollected.map((id) => {
             const source = segmentLookup.get(id);
             if (!source) return null;
             const isPinned = pinned.includes(id);
+            const pinIndex = pinned.indexOf(id);
             const pinDisabled =
               puzzleActive && !isPinned && pinned.length >= maxPins;
 
@@ -2355,19 +2345,13 @@ function EvidenceDrawer({
                 </div>
                 <blockquote>“{source.segment.text}”</blockquote>
                 <div className="evidence-card-bottom">
-                  <label>
-                    归类
-                    <select
-                      value={tags[id] ?? "未分类"}
-                      onChange={(event) => onTag(id, event.target.value)}
-                    >
-                      {tagOptions.map((tag) => (
-                        <option value={tag} key={tag}>
-                          {tag}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <span className="evidence-state">
+                    {puzzleActive
+                      ? isPinned
+                        ? `当前推理 · 第 ${pinIndex + 1} 条`
+                        : "尚未用于当前推理"
+                      : `${source.weekday} · 已收入摘录`}
+                  </span>
                   {puzzleActive && (
                     <button
                       type="button"
@@ -2376,7 +2360,7 @@ function EvidenceDrawer({
                       disabled={pinDisabled}
                       aria-pressed={isPinned}
                     >
-                      {isPinned ? "已用于推理" : "用于推理"}
+                      {isPinned ? "移出推理" : "用于推理"}
                     </button>
                   )}
                 </div>

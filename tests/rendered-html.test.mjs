@@ -57,4 +57,8 @@ test("the diary contains the complete evidence and conclusion loop", async () =>
   assert.match(source, /trace-trigger/);
   assert.match(source, /page-turn/);
   assert.doesNotMatch(source, /corner-action/);
+  assert.doesNotMatch(source, /tagOptions/);
+  assert.doesNotMatch(source, />归类</);
+  assert.match(source, /当前推理已选/);
+  assert.match(source, /移出推理/);
 });
