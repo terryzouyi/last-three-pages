@@ -1850,7 +1850,7 @@ function SoundControl({
   const description = !enabled
     ? "声音已关闭"
     : ready
-      ? "雨夜声场与互动音效已开启"
+      ? "剧情音效已开启"
       : "声音将在首次互动后开启";
 
   return (
@@ -1866,7 +1866,7 @@ function SoundControl({
         <span className="sound-mark" aria-hidden="true">
           {enabled ? "◖))" : "◖×"}
         </span>
-        <span className="sound-label">{cover ? description : "声场"}</span>
+        <span className="sound-label">{cover ? description : "声音"}</span>
         <b className="sound-state">{stateLabel}</b>
       </button>
       <label className="sound-volume">
@@ -1881,7 +1881,7 @@ function SoundControl({
           aria-label="声音音量"
         />
       </label>
-      {cover && <small>建议佩戴耳机，声音不会影响谜题判定</small>}
+      {cover && <small>静默优先，只在翻页与关键剧情时响起</small>}
     </div>
   );
 }

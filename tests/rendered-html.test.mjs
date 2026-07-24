@@ -112,7 +112,7 @@ test("the diary contains the complete evidence and conclusion loop", async () =>
   assert.match(source, /不能仅凭这些文字确定代写者/);
 });
 
-test("the diary has adaptive horror ambience, interaction sounds, and persistent controls", async () => {
+test("the diary uses silence-first horror cues without continuous loops", async () => {
   const [source, audioSource] = await Promise.all([
     loadDiarySource(),
     loadAudioSource(),
@@ -126,14 +126,17 @@ test("the diary has adaptive horror ambience, interaction sounds, and persistent
   assert.match(source, /diaryAudio\.play\("crossout"\)/);
   assert.match(audioSource, /last-three-pages-audio-v1/);
   assert.match(audioSource, /new AudioContext\(\)/);
-  assert.match(audioSource, /quiet:/);
-  assert.match(audioSource, /uneasy:/);
-  assert.match(audioSource, /dread:/);
-  assert.match(audioSource, /ending:/);
+  assert.match(audioSource, /mood === "quiet"/);
+  assert.match(audioSource, /mood === "uneasy"/);
+  assert.match(audioSource, /mood === "dread"/);
+  assert.match(audioSource, /mood === "cover"/);
   assert.match(audioSource, /playAmbientTexture/);
-  assert.match(audioSource, /duckRoom/);
   assert.match(audioSource, /playKnock/);
+  assert.match(audioSource, /ambience/);
+  assert.match(audioSource, /if \(mood === "quiet"\) \{\s+return;/);
   assert.doesNotMatch(audioSource, /motif:/);
+  assert.doesNotMatch(audioSource, /\.loop\s*=\s*true/);
+  assert.doesNotMatch(audioSource, /setInterval|setTimeout/);
 });
 
 test("every puzzle is solvable from earlier, internally consistent evidence", async () => {
