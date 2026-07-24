@@ -35,10 +35,17 @@
   display: grid;
   width: calc(100% - 28px);
   min-height: 48px;
-  grid-template-columns: 126px minmax(0, 1fr) 126px;
+  grid-template-columns: 126px minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
   margin: 0 auto 12px;
+}
+
+.reader-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .reader-exit,
@@ -62,6 +69,121 @@
     border-color 150ms ease,
     color 150ms ease,
     background 150ms ease;
+}
+
+.reader-tools .reader-notes {
+  min-width: 116px;
+}
+
+.sound-control {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border: 1px solid rgba(221, 207, 186, 0.16);
+  border-radius: 6px;
+  color: rgba(224, 210, 190, 0.64);
+  background: rgba(17, 15, 13, 0.48);
+}
+
+.sound-toggle {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 4px !important;
+  border: 0 !important;
+  color: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  font-size: 9px !important;
+  letter-spacing: 0.05em !important;
+  white-space: nowrap;
+}
+
+.sound-toggle:hover {
+  color: #f2e3cd !important;
+}
+
+.sound-mark {
+  min-width: 22px;
+  color: rgba(209, 180, 141, 0.72);
+  font-family: ui-monospace, "SFMono-Regular", monospace;
+  font-size: 10px;
+  letter-spacing: -0.12em;
+}
+
+.sound-state {
+  display: inline-grid;
+  min-width: 22px;
+  height: 18px;
+  margin: 0 !important;
+  place-items: center;
+  border: 1px solid rgba(215, 188, 151, 0.25) !important;
+  border-radius: 10px !important;
+  color: rgba(239, 220, 193, 0.74);
+  font-size: 8px !important;
+  font-weight: 500 !important;
+}
+
+.sound-volume {
+  display: grid;
+  width: 68px;
+  gap: 2px;
+}
+
+.sound-volume > span {
+  color: rgba(211, 196, 175, 0.38);
+  font-size: 7px;
+  letter-spacing: 0.04em;
+}
+
+.sound-volume input {
+  width: 100%;
+  height: 12px;
+  margin: 0;
+  accent-color: #9c4c40;
+  cursor: pointer;
+}
+
+.cover-sound {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: min(280px, 100%);
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 4px 12px;
+  margin-top: 13px;
+  padding: 8px 10px 7px;
+  border-color: rgba(221, 196, 160, 0.16);
+  color: rgba(229, 209, 179, 0.65);
+  background: rgba(18, 7, 6, 0.16);
+}
+
+.cover-sound .sound-toggle {
+  justify-content: flex-start;
+  padding: 0 !important;
+}
+
+.cover-sound .sound-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cover-sound .sound-volume {
+  width: 92px;
+}
+
+.cover-sound > small {
+  grid-column: 1 / 3;
+  color: rgba(214, 193, 164, 0.37);
+  font-size: 7px;
+  letter-spacing: 0.05em;
+  text-align: center;
 }
 
 .reader-exit:hover,
@@ -541,7 +663,7 @@
   .book-toolbar {
     position: static;
     width: calc(100% - 8px);
-    grid-template-columns: 104px minmax(0, 1fr) 104px;
+    grid-template-columns: 104px minmax(0, 1fr) auto;
     gap: 8px;
     margin-top: 4px;
   }
@@ -551,6 +673,18 @@
     min-height: 38px;
     padding: 7px 8px;
     font-size: 9px;
+  }
+
+  .reader-tools {
+    gap: 5px;
+  }
+
+  .reader-tools .sound-volume {
+    display: none;
+  }
+
+  .reader-tools .reader-notes {
+    min-width: 100px;
   }
 
   .reader-location > div:first-child > span {
@@ -608,7 +742,7 @@
 
 @media (max-width: 540px) {
   .book-toolbar {
-    grid-template-columns: 82px minmax(0, 1fr) 82px;
+    grid-template-columns: 72px minmax(0, 1fr) auto;
   }
 
   .reader-exit > span {
@@ -617,6 +751,34 @@
 
   .reader-notes {
     gap: 5px;
+  }
+
+  .reader-tools {
+    gap: 3px;
+  }
+
+  .reader-tools .reader-notes {
+    min-width: 74px;
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .reader-tools .sound-control {
+    min-width: 38px;
+    padding: 3px;
+  }
+
+  .reader-tools .sound-label,
+  .reader-tools .sound-mark {
+    display: none;
+  }
+
+  .reader-tools .sound-toggle {
+    gap: 2px;
+  }
+
+  .reader-tools .sound-state {
+    min-width: 26px;
   }
 
   .reader-location {

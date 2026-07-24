@@ -27,6 +27,10 @@ async function loadDiarySource() {
   return readFile(new URL("../app/DiaryGame.tsx", import.meta.url), "utf8");
 }
 
+async function loadAudioSource() {
+  return readFile(new URL("../app/useDiaryAudio.ts", import.meta.url), "utf8");
+}
+
 function extractPages(source) {
   const marker = "const pages: GamePage[] = ";
   const start = source.indexOf(marker) + marker.length;
@@ -106,6 +110,27 @@ test("the diary contains the complete evidence and conclusion loop", async () =>
   assert.doesNotMatch(source, /顾明海在火灾之后替死去的顾澄/);
   assert.doesNotMatch(source, /我们今晚是要离开/);
   assert.match(source, /不能仅凭这些文字确定代写者/);
+});
+
+test("the diary has adaptive music, interaction sounds, and persistent controls", async () => {
+  const [source, audioSource] = await Promise.all([
+    loadDiarySource(),
+    loadAudioSource(),
+  ]);
+
+  assert.match(source, /<SoundControl/);
+  assert.match(source, /声音将在首次互动后开启/);
+  assert.match(source, /diaryAudio\.play\("page"\)/);
+  assert.match(source, /diaryAudio\.play\("collect"\)/);
+  assert.match(source, /diaryAudio\.play\("correct"\)/);
+  assert.match(source, /diaryAudio\.play\("crossout"\)/);
+  assert.match(audioSource, /last-three-pages-audio-v1/);
+  assert.match(audioSource, /new AudioContext\(\)/);
+  assert.match(audioSource, /quiet:/);
+  assert.match(audioSource, /uneasy:/);
+  assert.match(audioSource, /dread:/);
+  assert.match(audioSource, /ending:/);
+  assert.match(audioSource, /playMotif/);
 });
 
 test("every puzzle is solvable from earlier, internally consistent evidence", async () => {

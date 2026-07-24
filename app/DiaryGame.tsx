@@ -1,6 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type DiaryAudioMood,
+  type DiarySoundCue,
+  useDiaryAudio,
+} from "./useDiaryAudio";
 
 type Segment = {
   id: string;
@@ -1171,6 +1176,16 @@ export default function DiaryGame() {
         : tensionLevel >= 1
           ? "封面下面像有人用指节，很轻地敲了三下。"
           : "书合上了，但那股潮湿的纸味没有散。";
+  const audioMood: DiaryAudioMood = finalComplete
+    ? "ending"
+    : !opened
+      ? "cover"
+      : tensionLevel === 0
+        ? "quiet"
+        : tensionLevel === 1
+          ? "uneasy"
+          : "dread";
+  const diaryAudio = useDiaryAudio(audioMood);
 
   /* eslint-disable react-hooks/set-state-in-effect -- one-time hydration from device-local save data */
   useEffect(() => {
@@ -1291,21 +1306,23 @@ export default function DiaryGame() {
     (!isDeduction(page) || completed.includes(page.id));
 
   const goPrevious = useCallback(() => {
+    diaryAudio.play("page");
     setMessage("");
     setPinned([]);
     setDrawerOpen(false);
     setOpenTrace(null);
     setCurrentPage((value) => Math.max(0, value - 1));
-  }, []);
+  }, [diaryAudio]);
 
   const goNext = useCallback(() => {
     if (!canMoveForward) return;
+    diaryAudio.play("page");
     setMessage("");
     setPinned([]);
     setDrawerOpen(false);
     setOpenTrace(null);
     setCurrentPage((value) => Math.min(pages.length - 1, value + 1));
-  }, [canMoveForward]);
+  }, [canMoveForward, diaryAudio]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -1342,12 +1359,14 @@ export default function DiaryGame() {
     if (!source) return;
 
     if (collected.includes(id)) {
+      diaryAudio.play("erase");
       setCollected((items) => items.filter((item) => item !== id));
       setPinned((items) => items.filter((item) => item !== id));
       setMessage("已擦除这条摘录。");
       return;
     }
 
+    diaryAudio.play("collect");
     setCollected((items) => [...items, id]);
     setMessage("已将这句话抄到页边摘录。");
   }
@@ -1362,33 +1381,39 @@ export default function DiaryGame() {
     }
 
     if (pinned.includes(id)) {
+      diaryAudio.play("unpin");
       setPinned((items) => items.filter((item) => item !== id));
       return;
     }
 
     if (pinned.length >= activePuzzle.maxPins) {
+      diaryAudio.play("wrong");
       setMessage(`这次推理只能使用 ${activePuzzle.maxPins} 条摘录。`);
       return;
     }
 
+    diaryAudio.play("pin");
     setPinned((items) => [...items, id]);
     setMessage("");
   }
 
   function submitDeduction(puzzle: DeductionPage) {
     if (pinned.length !== puzzle.maxPins) {
+      diaryAudio.play("wrong");
       setMessage(`请先选满 ${puzzle.maxPins} 条摘录。`);
       return;
     }
 
     const correct = satisfiesEvidenceGroups(pinned, puzzle.acceptedGroups);
     if (!correct) {
+      diaryAudio.play("wrong");
       setMessage(
         "这些摘录仍缺少一种必要事实。相同含义的句子可以替代，不必逐字命中标准答案。",
       );
       return;
     }
 
+    diaryAudio.play("correct");
     setCompleted((items) =>
       items.includes(puzzle.id) ? items : [...items, puzzle.id],
     );
@@ -1408,6 +1433,7 @@ export default function DiaryGame() {
     if (!finalPage) return;
 
     if (pinned.length !== finalPage.maxPins) {
+      diaryAudio.play("wrong");
       setMessage(`请先选满 ${finalPage.maxPins} 条摘录。`);
       return;
     }
@@ -1417,12 +1443,14 @@ export default function DiaryGame() {
       finalPage.acceptedGroups,
     );
     if (!correct) {
+      diaryAudio.play("wrong");
       setMessage(
         "这个结论仍有越过证据的地方。只保留能直接证明门锁、离开计划和伪造目的的原句。",
       );
       return;
     }
 
+    diaryAudio.play("reveal");
     setUsedEvidence((current) => ({
       ...current,
       final: [...pinned],
@@ -1437,11 +1465,13 @@ export default function DiaryGame() {
   }
 
   function revealHint(id: string, hints: string[]) {
+    diaryAudio.play("hint");
     const next = Math.min((hintLevel[id] ?? 0) + 1, hints.length + 1);
     setHintLevel((current) => ({ ...current, [id]: next }));
   }
 
   function applyCorrectEvidence(ids: string[]) {
+    diaryAudio.play("hint");
     setCollected((items) => Array.from(new Set([...items, ...ids])));
     setPinned(ids);
     setDrawerOpen(false);
@@ -1449,6 +1479,7 @@ export default function DiaryGame() {
   }
 
   function toggleEndingLine(id: string) {
+    diaryAudio.play("crossout");
     setCrossedLines((items) =>
       items.includes(id)
         ? items.filter((item) => item !== id)
@@ -1457,6 +1488,7 @@ export default function DiaryGame() {
   }
 
   function togglePageTrace(id: string) {
+    if (!revealedTraces.includes(id)) diaryAudio.play("trace");
     setRevealedTraces((items) =>
       items.includes(id) ? items : [...items, id],
     );
@@ -1469,6 +1501,7 @@ export default function DiaryGame() {
   }
 
   function replayEnding() {
+    diaryAudio.play("page");
     setEndingStep(0);
     setCrossedLines([]);
     setFinalChoice(null);
@@ -1497,6 +1530,18 @@ export default function DiaryGame() {
     setRevealedTraces([]);
     setOpenTrace(null);
     setResetArmed(false);
+  }
+
+  function setEndingStepWithSound(step: number) {
+    const cue: DiarySoundCue =
+      step === 4 ? "write" : step === 2 ? "page" : "reveal";
+    diaryAudio.play(cue);
+    setEndingStep(step);
+  }
+
+  function chooseFinalWithSound(choice: FinalChoice) {
+    diaryAudio.play("select");
+    setFinalChoice(choice);
   }
 
   if (!hydrated) {
@@ -1537,12 +1582,21 @@ export default function DiaryGame() {
             className="open-book-button"
             type="button"
             onClick={() => {
+              diaryAudio.play("open");
               setResetArmed(false);
               setOpened(true);
             }}
           >
             {hasReadingProgress ? "从书签处继续" : "打开日记"}
           </button>
+          <SoundControl
+            enabled={diaryAudio.enabled}
+            ready={diaryAudio.ready}
+            volume={diaryAudio.volume}
+            onToggle={diaryAudio.toggle}
+            onVolume={diaryAudio.setVolume}
+            cover
+          />
           {hasReadingProgress && (
             <p className="cover-save-note">合上日记不会清除任何记录</p>
           )}
@@ -1577,6 +1631,7 @@ export default function DiaryGame() {
             type="button"
             className="reader-exit"
             onClick={() => {
+              diaryAudio.play("close");
               setDrawerOpen(false);
               setOpenTrace(null);
               setOpened(false);
@@ -1600,18 +1655,30 @@ export default function DiaryGame() {
               <span style={{ width: `${progress}%` }} />
             </div>
           </div>
-          <button
-            type="button"
-            className={`reader-notes ${
-              drawerOpen ? "active" : ""
-            }`}
-            onClick={() => setDrawerOpen((value) => !value)}
-            aria-expanded={drawerOpen}
-            aria-controls="evidence-drawer"
-          >
-            页边摘录
-            <b>{collected.length}</b>
-          </button>
+          <div className="reader-tools">
+            <SoundControl
+              enabled={diaryAudio.enabled}
+              ready={diaryAudio.ready}
+              volume={diaryAudio.volume}
+              onToggle={diaryAudio.toggle}
+              onVolume={diaryAudio.setVolume}
+            />
+            <button
+              type="button"
+              className={`reader-notes ${
+                drawerOpen ? "active" : ""
+              }`}
+              onClick={() => {
+                diaryAudio.play("page");
+                setDrawerOpen((value) => !value);
+              }}
+              aria-expanded={drawerOpen}
+              aria-controls="evidence-drawer"
+            >
+              页边摘录
+              <b>{collected.length}</b>
+            </button>
+          </div>
         </div>
 
         <div className={`open-book page-${page.kind}`}>
@@ -1621,7 +1688,10 @@ export default function DiaryGame() {
           {page.kind === "front" && (
             <Frontispiece
               key={page.id}
-              onBegin={() => setCurrentPage(1)}
+              onBegin={() => {
+                diaryAudio.play("page");
+                setCurrentPage(1);
+              }}
               collectedCount={collected.length}
             />
           )}
@@ -1645,7 +1715,10 @@ export default function DiaryGame() {
               completed={completed.includes(page.id)}
               pinned={pinned}
               submittedEvidence={usedEvidence[page.id] ?? page.requiredIds}
-              onOpenDrawer={() => setDrawerOpen(true)}
+              onOpenDrawer={() => {
+                diaryAudio.play("page");
+                setDrawerOpen(true);
+              }}
               onSubmit={() => submitDeduction(page)}
               hintLevel={hintLevel[page.id] ?? 0}
               onHint={() => revealHint(page.id, page.hints)}
@@ -1663,14 +1736,17 @@ export default function DiaryGame() {
               endingStep={endingStep}
               crossedLines={crossedLines}
               finalChoice={finalChoice}
-              onOpenDrawer={() => setDrawerOpen(true)}
+              onOpenDrawer={() => {
+                diaryAudio.play("page");
+                setDrawerOpen(true);
+              }}
               onSubmit={submitFinal}
               hintLevel={hintLevel.final ?? 0}
               onHint={() => revealHint("final", page.hints)}
               onUseAnswer={() => applyCorrectEvidence(page.requiredIds)}
-              onSetEndingStep={setEndingStep}
+              onSetEndingStep={setEndingStepWithSound}
               onToggleEndingLine={toggleEndingLine}
-              onChooseFinal={setFinalChoice}
+              onChooseFinal={chooseFinalWithSound}
               onReplayEnding={replayEnding}
             />
           )}
@@ -1752,6 +1828,61 @@ export default function DiaryGame() {
         />
       </section>
     </main>
+  );
+}
+
+function SoundControl({
+  enabled,
+  ready,
+  volume,
+  onToggle,
+  onVolume,
+  cover = false,
+}: {
+  enabled: boolean;
+  ready: boolean;
+  volume: number;
+  onToggle: () => void;
+  onVolume: (volume: number) => void;
+  cover?: boolean;
+}) {
+  const stateLabel = !enabled ? "关" : ready ? "开" : "待启";
+  const description = !enabled
+    ? "声音已关闭"
+    : ready
+      ? "环境音乐与音效已开启"
+      : "声音将在首次互动后开启";
+
+  return (
+    <div className={`sound-control ${cover ? "cover-sound" : ""}`}>
+      <button
+        className="sound-toggle"
+        type="button"
+        onClick={onToggle}
+        aria-pressed={enabled}
+        aria-label={`${description}，点击切换`}
+        title={description}
+      >
+        <span className="sound-mark" aria-hidden="true">
+          {enabled ? "◖))" : "◖×"}
+        </span>
+        <span className="sound-label">{cover ? description : "声场"}</span>
+        <b className="sound-state">{stateLabel}</b>
+      </button>
+      <label className="sound-volume">
+        <span>{cover ? "音量" : "调节音量"}</span>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value={Math.round(volume * 100)}
+          onChange={(event) => onVolume(Number(event.target.value) / 100)}
+          aria-label="声音音量"
+        />
+      </label>
+      {cover && <small>建议佩戴耳机，声音不会影响谜题判定</small>}
+    </div>
   );
 }
 
