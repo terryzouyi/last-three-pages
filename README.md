@@ -4,6 +4,11 @@
 
 玩家阅读顾澄在 2004 年留下的日记，点击句子制作页边摘录，再利用时间、称呼、门锁与前后矛盾完成四次阶段推理，最后判断日记末三页的真正作者。
 
+## 在线游玩
+
+- GitHub Pages：<https://terryzouyi.github.io/last-three-pages/>
+- OpenAI Sites：<https://last-three-pages.sakurazou792501.chatgpt.site>
+
 ## 体验原则
 
 - 不跳转到其他网站或档案页面。
@@ -23,4 +28,5 @@
 pnpm dev
 pnpm test
 pnpm build
+GITHUB_PAGES=true GITHUB_REPOSITORY=terryzouyi/last-three-pages pnpm run build:pages
 ```
