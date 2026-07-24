@@ -45,6 +45,8 @@ test("the diary contains the complete evidence and conclusion loop", async () =>
   assert.match(source, /three-tickets/);
   assert.match(source, /forged-alone/);
   assert.match(source, /最后三页不是顾澄写的/);
-  assert.match(source, /谢谢你没有相信最后三页/);
+  assert.match(source, /划掉伪造的结局/);
+  assert.match(source, /不要回来。不是你丢下我/);
+  assert.match(source, /重新读一次结局/);
   assert.match(source, /last-three-pages-diary-v1/);
 });

@@ -91,6 +91,33 @@ select:focus-visible {
   pointer-events: none;
   content: "";
   box-shadow: inset 0 0 160px 45px rgba(0, 0, 0, 0.78);
+  transition:
+    box-shadow 900ms ease,
+    background 900ms ease;
+}
+
+.scene.tension-1::after {
+  box-shadow: inset 0 0 180px 54px rgba(0, 0, 0, 0.82);
+}
+
+.scene.tension-2::after {
+  background: rgba(17, 27, 28, 0.08);
+  box-shadow: inset 0 0 205px 72px rgba(0, 0, 0, 0.87);
+}
+
+.scene.tension-3::after {
+  background: rgba(16, 28, 31, 0.14);
+  box-shadow: inset 0 0 230px 86px rgba(0, 0, 0, 0.91);
+}
+
+.scene.tension-2 .rain,
+.scene.tension-3 .rain {
+  opacity: 0.18;
+}
+
+.scene.ending-active .rain {
+  opacity: 0.08;
+  transition: opacity 1.2s ease;
 }
 
 .rain {
@@ -676,9 +703,30 @@ select:focus-visible {
 /* Frontispiece */
 
 .frontispiece,
+.reading-spread,
 .deduction-spread,
 .final-spread,
-.final-complete {
+.final-complete,
+.ending-sequence {
+  animation: page-settle 420ms ease both;
+}
+
+@keyframes page-settle {
+  from {
+    opacity: 0;
+    transform: translateX(7px) rotateY(-0.7deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0);
+  }
+}
+
+.frontispiece,
+.deduction-spread,
+.final-spread,
+.final-complete,
+.ending-sequence {
   position: relative;
   z-index: 2;
   display: grid;
@@ -918,10 +966,43 @@ select:focus-visible {
   line-height: 1.65;
 }
 
-.conclusion-block > p:last-child,
+.conclusion-block > p:not(.pencil-label),
 .hint-block > p {
   color: #635b52;
   font-size: 13px;
+  line-height: 1.8;
+}
+
+.reader-reflection {
+  position: relative;
+  margin-top: 28px;
+  padding: 16px 16px 12px 22px;
+  border-left: 1px solid rgba(83, 90, 87, 0.4);
+  color: #5f625d;
+  background: rgba(92, 104, 99, 0.035);
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  transform: rotate(-0.35deg);
+}
+
+.reader-reflection::before {
+  position: absolute;
+  top: 18px;
+  left: 8px;
+  color: rgba(86, 91, 86, 0.45);
+  content: "｜";
+}
+
+.reader-reflection span {
+  display: block;
+  margin-bottom: 7px;
+  color: rgba(74, 79, 75, 0.68);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+}
+
+.reader-reflection p {
+  margin: 0;
+  font-size: 14px;
   line-height: 1.8;
 }
 
@@ -1163,6 +1244,304 @@ select:focus-visible {
   transform: rotate(-3deg);
 }
 
+/* Ending ritual */
+
+.ending-sequence {
+  align-items: stretch;
+  padding-top: 48px;
+}
+
+.ending-step {
+  position: relative;
+  padding: 30px 26px;
+}
+
+.ending-step-left {
+  align-self: center;
+}
+
+.ending-step-right {
+  align-self: center;
+}
+
+.ending-kicker {
+  margin: 0 0 22px;
+  color: var(--red-ink);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+.ending-sequence h2 {
+  margin: 0 0 24px;
+  color: #67231e;
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: clamp(28px, 2.7vw, 39px);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.verdict-context,
+.ending-instruction {
+  color: #595047;
+  font-size: 14px;
+  line-height: 1.95;
+}
+
+.ending-facts {
+  padding: 18px 20px;
+  border-top: 1px solid rgba(86, 65, 46, 0.22);
+  border-bottom: 1px solid rgba(86, 65, 46, 0.22);
+}
+
+.ending-facts p {
+  position: relative;
+  margin: 0;
+  padding: 11px 0 11px 21px;
+  color: #4d4238;
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.ending-facts p::before {
+  position: absolute;
+  left: 0;
+  color: rgba(112, 37, 31, 0.55);
+  content: "—";
+}
+
+.reader-thought {
+  margin: 27px 2px 0;
+  color: #62645f;
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 15px;
+  line-height: 1.9;
+  transform: rotate(-0.3deg);
+}
+
+.ending-action {
+  margin-top: 28px;
+  padding: 11px 17px;
+  border: 1px solid rgba(109, 36, 30, 0.44);
+  color: #702720;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    opacity 180ms ease;
+}
+
+.ending-action:hover:not(:disabled) {
+  color: #f1e3cf;
+  background: #702720;
+}
+
+.ending-action:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.lie-lines {
+  display: grid;
+  gap: 13px;
+}
+
+.lie-line {
+  position: relative;
+  width: 100%;
+  min-height: 91px;
+  overflow: hidden;
+  padding: 14px 16px;
+  border: 1px solid rgba(82, 62, 44, 0.2);
+  color: #403831;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  text-align: left;
+}
+
+.lie-line::after {
+  position: absolute;
+  right: 12px;
+  bottom: 7px;
+  color: rgba(92, 73, 55, 0.43);
+  content: "点击划除";
+  font-size: 9px;
+}
+
+.lie-text {
+  display: inline;
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.lie-line.crossed .lie-text {
+  color: rgba(75, 64, 54, 0.46);
+  text-decoration: line-through 2px rgba(114, 38, 32, 0.76);
+}
+
+.lie-line.crossed::after {
+  content: "已划除";
+}
+
+.correction {
+  display: block;
+  margin-top: 7px;
+  color: #762a24;
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 13px;
+  line-height: 1.65;
+  animation: ink-appear 460ms ease both;
+}
+
+@keyframes ink-appear {
+  from {
+    opacity: 0;
+    filter: blur(1.5px);
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.imprint-page {
+  padding: 35px 34px;
+  border-right: 1px solid rgba(75, 60, 44, 0.14);
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 37px,
+    rgba(80, 65, 48, 0.08) 37px 38px
+  );
+}
+
+.imprint-date {
+  margin: 0 0 30px;
+  color: rgba(64, 57, 50, 0.55);
+  font-size: 11px;
+}
+
+.imprint-text {
+  margin: 0 0 18px;
+  color: rgba(64, 57, 50, 0.61);
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 18px;
+  line-height: 1.9;
+  text-shadow: 0.5px 0 rgba(255, 255, 255, 0.45);
+}
+
+.imprint-signature {
+  margin: 27px 14px 0 0;
+  color: rgba(64, 57, 50, 0.55);
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 16px;
+  text-align: right;
+}
+
+.choice-list {
+  display: grid;
+  gap: 13px;
+}
+
+.ending-choice {
+  width: 100%;
+  padding: 17px 18px;
+  border: 1px solid rgba(81, 63, 45, 0.23);
+  color: #494037;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 17px;
+  line-height: 1.5;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.ending-choice:hover {
+  border-color: rgba(110, 38, 32, 0.45);
+  transform: translateX(3px);
+}
+
+.ending-choice.selected {
+  border-color: #772c25;
+  color: #67231e;
+  background: rgba(121, 44, 37, 0.07);
+  box-shadow: inset 3px 0 #772c25;
+}
+
+.today-ending {
+  font-family: "Kaiti SC", "STKaiti", cursive;
+}
+
+.today-ending .ending-step-left {
+  color: #534b42;
+  font-size: 17px;
+  line-height: 1.9;
+}
+
+.written-choice {
+  margin-top: 44px;
+  padding: 19px 0;
+  border-top: 1px solid rgba(77, 59, 42, 0.19);
+  border-bottom: 1px solid rgba(77, 59, 42, 0.19);
+  color: #6e2822;
+  font-size: 21px;
+}
+
+.new-ink {
+  margin: 0;
+  color: #762821;
+  font-size: clamp(24px, 2.5vw, 34px);
+  line-height: 1.65;
+  transform: rotate(-0.8deg);
+  animation: ink-appear 1.5s 180ms ease both;
+}
+
+.ending-coda {
+  margin-top: 28px;
+  color: #554e45;
+  font-size: 16px;
+  line-height: 1.9;
+  animation: ink-appear 1.5s 820ms ease both;
+}
+
+.today-ending .ending-note {
+  animation: ink-appear 1.3s 1.55s ease both;
+}
+
+.ending-finish {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 26px;
+}
+
+.ending-finish .end-mark {
+  margin-top: 0;
+}
+
+.replay-ending {
+  padding: 7px 0;
+  border: 0;
+  color: rgba(87, 77, 68, 0.58);
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.replay-ending:hover {
+  color: #6c2822;
+}
+
 /* Evidence drawer, still physically inside the book */
 
 .evidence-drawer {
@@ -1377,7 +1756,8 @@ select:focus-visible {
   .frontispiece,
   .deduction-spread,
   .final-spread,
-  .final-complete {
+  .final-complete,
+  .ending-sequence {
     min-height: 730px;
     grid-template-columns: 1fr;
     gap: 24px;
@@ -1407,7 +1787,8 @@ select:focus-visible {
   .final-question,
   .final-hints,
   .final-left,
-  .final-right {
+  .final-right,
+  .ending-step {
     padding: 18px 12px;
   }
 
@@ -1506,6 +1887,19 @@ select:focus-visible {
 
   .final-complete {
     gap: 6px;
+  }
+
+  .ending-sequence {
+    gap: 6px;
+  }
+
+  .lie-line {
+    min-height: 102px;
+  }
+
+  .imprint-page {
+    border-right: 0;
+    border-bottom: 1px solid rgba(75, 60, 44, 0.14);
   }
 }
 

@@ -39,6 +39,7 @@ type DeductionPage = {
   maxPins: number;
   conclusion: string;
   afterword: string;
+  reflection: string;
   hints: string[];
 };
 
@@ -53,6 +54,8 @@ type FinalPage = {
 
 type GamePage = FrontPage | ReadingPage | DeductionPage | FinalPage;
 
+type FinalChoice = "truth" | "escape" | "smallboat";
+
 type SavedGame = {
   opened: boolean;
   currentPage: number;
@@ -61,11 +64,53 @@ type SavedGame = {
   tags: Record<string, string>;
   hintLevel?: Record<string, number>;
   finalComplete: boolean;
+  endingStep?: number;
+  crossedLines?: string[];
+  finalChoice?: FinalChoice | null;
 };
 
 const STORAGE_KEY = "last-three-pages-diary-v1";
 
 const tagOptions = ["未分类", "称呼", "时间", "门锁", "离开计划", "异常措辞"];
+
+const endingLines = [
+  {
+    id: "no-haicheng",
+    lie: "我没有打算去海城，也没有买过车票。",
+    truth: "三张车票已经买好。她们原本要离开。",
+  },
+  {
+    id: "alone",
+    lie: "这是我一个人的决定。",
+    truth: "这句话被重复了三次，因为有人需要她独自负责。",
+  },
+  {
+    id: "father-clear",
+    lie: "与爸爸、妈妈和弟弟都没有关系。",
+    truth: "钥匙一直在顾明海身上。方岚被锁在房内。",
+  },
+] as const;
+
+const finalChoices: Record<
+  FinalChoice,
+  { label: string; response: string; coda: string }
+> = {
+  truth: {
+    label: "最后三页不是她写的。",
+    response: "这一次，最后三页不再属于写下谎言的人。",
+    coda: "你没有替顾澄写结局。你只是把她原来的文字还给了她。",
+  },
+  escape: {
+    label: "她们那天原本要离开。",
+    response: "至少在这本日记里，她们终于坐上了四点二十的车。",
+    coda: "雨停以后，纸页上留下了一小块像车窗的亮光。",
+  },
+  smallboat: {
+    label: "小船没有抛下她们。",
+    response: "那条小船已经按照姐姐说的，走得足够远了。",
+    coda: "你合上书时，封底传来很轻的三下敲击。",
+  },
+};
 
 const pages: GamePage[] = [
   {
@@ -284,6 +329,8 @@ const pages: GamePage[] = [
       "顾澄称弟弟为“小船”，称父亲为“那个人”，称取暖器为“小太阳”。",
     afterword:
       "这些称呼并非偶然。它们在她的文字里反复出现，会成为辨认最后几页作者的依据。",
+    reflection:
+      "我原以为称呼只是习惯。现在，它们成了一个人留在纸上最接近指纹的东西。",
     hints: [
       "方向：不要选人物做过什么，只找顾澄给他们起的称呼。",
       "定位：答案分别在10月3日、10月4日和10月6日。",
@@ -501,6 +548,8 @@ const pages: GamePage[] = [
       "不是。西边卧室只能从走廊上锁，方岚曾被关在里面，唯一的钥匙由顾明海随身保管。",
     afterword:
       "“门打不开”不是火灾后的偶然。至少从十月中旬起，它就是顾明海控制方岚的手段。",
+    reflection:
+      "我开始害怕的不是那扇门，而是顾澄把敲门声写得这么平静。她已经听过不止一次。",
     hints: [
       "方向：需要三类证据——门锁结构、房内动静、钥匙归属。",
       "定位：重点回看10月16日、10月18日和10月20日；10月21日、23日也有可替代证据。",
@@ -742,6 +791,8 @@ const pages: GamePage[] = [
       "方岚准备在11月19日星期五，带顾澄和小泊乘下午四点二十的末班车离开。",
     afterword:
       "她们不是临时外出。新名字、三张票和逃生路线共同证明，这是一次经过长期准备的逃离。",
+    reflection:
+      "这不是旅行计划。她们把活下去拆成时间、站台和三张票，只为了让一个八岁的孩子也能记住。",
     hints: [
       "方向：答案要同时说明时间、人数、日期和为什么那时安全。",
       "定位：出发时间在11月1日，人数在11月5日前后，日期在11月13日；作息证词在10月14日。",
@@ -893,6 +944,8 @@ const pages: GamePage[] = [
       "不是。最后三页的作者知道顾澄家的事情，却不熟悉她最稳定的语言习惯。",
     afterword:
       "“爸爸、弟弟、取暖器”看似更正式，恰好暴露了模仿者。顾澄从未这样称呼他们。",
+    reflection:
+      "最后三页写得越肯定，就越不像日记。写它的人不是想让顾澄被理解，只想让她负责。",
     hints: [
       "方向：把顾澄原来的三种称呼，与最后三页的新称呼逐一配对比较。",
       "定位：原称呼集中在10月3日至6日；新称呼都在11月19日的前两页。",
@@ -981,11 +1034,22 @@ export default function DiaryGame() {
   const [message, setMessage] = useState("");
   const [hintLevel, setHintLevel] = useState<Record<string, number>>({});
   const [finalComplete, setFinalComplete] = useState(false);
+  const [endingStep, setEndingStep] = useState(0);
+  const [crossedLines, setCrossedLines] = useState<string[]>([]);
+  const [finalChoice, setFinalChoice] = useState<FinalChoice | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [resetArmed, setResetArmed] = useState(false);
   const [today, setToday] = useState("");
 
   const page = pages[currentPage] ?? pages[0];
+  const tensionLevel =
+    page.kind === "final"
+      ? 3
+      : currentPage >= Math.floor(pages.length * 0.66)
+        ? 2
+        : currentPage >= Math.floor(pages.length * 0.33)
+          ? 1
+          : 0;
   const activePuzzle =
     page.kind === "deduction" || page.kind === "final" ? page : null;
 
@@ -1003,6 +1067,23 @@ export default function DiaryGame() {
         setTags(saved.tags ?? {});
         setHintLevel(saved.hintLevel ?? {});
         setFinalComplete(Boolean(saved.finalComplete));
+        setEndingStep(
+          Number.isFinite(saved.endingStep)
+            ? Math.max(0, Math.min(saved.endingStep ?? 0, 4))
+            : 0,
+        );
+        setCrossedLines(
+          Array.isArray(saved.crossedLines)
+            ? saved.crossedLines.filter((id) =>
+                endingLines.some((line) => line.id === id),
+              )
+            : [],
+        );
+        setFinalChoice(
+          saved.finalChoice && saved.finalChoice in finalChoices
+            ? saved.finalChoice
+            : null,
+        );
       }
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
@@ -1029,6 +1110,9 @@ export default function DiaryGame() {
       tags,
       hintLevel,
       finalComplete,
+      endingStep,
+      crossedLines,
+      finalChoice,
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
   }, [
@@ -1039,6 +1123,9 @@ export default function DiaryGame() {
     tags,
     hintLevel,
     finalComplete,
+    endingStep,
+    crossedLines,
+    finalChoice,
     hydrated,
   ]);
 
@@ -1162,6 +1249,9 @@ export default function DiaryGame() {
     }
 
     setFinalComplete(true);
+    setEndingStep(0);
+    setCrossedLines([]);
+    setFinalChoice(null);
     setMessage("");
     setDrawerOpen(false);
     setPinned([]);
@@ -1184,6 +1274,20 @@ export default function DiaryGame() {
     setMessage("正确摘录已放入当前推理；你仍需要亲手确认并形成结论。");
   }
 
+  function toggleEndingLine(id: string) {
+    setCrossedLines((items) =>
+      items.includes(id)
+        ? items.filter((item) => item !== id)
+        : [...items, id],
+    );
+  }
+
+  function replayEnding() {
+    setEndingStep(0);
+    setCrossedLines([]);
+    setFinalChoice(null);
+  }
+
   function resetGame() {
     if (!resetArmed) {
       setResetArmed(true);
@@ -1201,6 +1305,9 @@ export default function DiaryGame() {
     setMessage("");
     setHintLevel({});
     setFinalComplete(false);
+    setEndingStep(0);
+    setCrossedLines([]);
+    setFinalChoice(null);
     setResetArmed(false);
   }
 
@@ -1247,7 +1354,12 @@ export default function DiaryGame() {
   }
 
   return (
-    <main className="scene" aria-label="日记阅读界面">
+    <main
+      className={`scene tension-${tensionLevel} ${
+        finalComplete ? "ending-active" : ""
+      }`}
+      aria-label="日记阅读界面"
+    >
       <div className="rain rain-one" />
       <div className="rain rain-two" />
 
@@ -1280,6 +1392,7 @@ export default function DiaryGame() {
 
           {page.kind === "front" && (
             <Frontispiece
+              key={page.id}
               onBegin={() => setCurrentPage(1)}
               collectedCount={collected.length}
             />
@@ -1287,6 +1400,7 @@ export default function DiaryGame() {
 
           {page.kind === "reading" && (
             <ReadingSpread
+              key={page.id}
               page={page}
               collected={collected}
               onToggle={toggleCollect}
@@ -1295,6 +1409,7 @@ export default function DiaryGame() {
 
           {page.kind === "deduction" && (
             <DeductionSpread
+              key={page.id}
               page={page}
               completed={completed.includes(page.id)}
               pinned={pinned}
@@ -1308,15 +1423,23 @@ export default function DiaryGame() {
 
           {page.kind === "final" && (
             <FinalSpread
+              key={page.id}
               page={page}
               complete={finalComplete}
               pinned={pinned}
               today={today}
+              endingStep={endingStep}
+              crossedLines={crossedLines}
+              finalChoice={finalChoice}
               onOpenDrawer={() => setDrawerOpen(true)}
               onSubmit={submitFinal}
               hintLevel={hintLevel.final ?? 0}
               onHint={() => revealHint("final", page.hints)}
               onUseAnswer={() => useCorrectEvidence(page.requiredIds)}
+              onSetEndingStep={setEndingStep}
+              onToggleEndingLine={toggleEndingLine}
+              onChooseFinal={setFinalChoice}
+              onReplayEnding={replayEnding}
             />
           )}
 
@@ -1531,6 +1654,10 @@ function DeductionSpread({
             <p className="pencil-label">写在页边的结论</p>
             <blockquote>{page.conclusion}</blockquote>
             <p>{page.afterword}</p>
+            <div className="reader-reflection">
+              <span>我写在页边</span>
+              <p>{page.reflection}</p>
+            </div>
           </div>
         ) : (
           <div className="hint-block">
@@ -1553,50 +1680,48 @@ function FinalSpread({
   complete,
   pinned,
   today,
+  endingStep,
+  crossedLines,
+  finalChoice,
   onOpenDrawer,
   onSubmit,
   hintLevel,
   onHint,
   onUseAnswer,
+  onSetEndingStep,
+  onToggleEndingLine,
+  onChooseFinal,
+  onReplayEnding,
 }: {
   page: FinalPage;
   complete: boolean;
   pinned: string[];
   today: string;
+  endingStep: number;
+  crossedLines: string[];
+  finalChoice: FinalChoice | null;
   onOpenDrawer: () => void;
   onSubmit: () => void;
   hintLevel: number;
   onHint: () => void;
   onUseAnswer: () => void;
+  onSetEndingStep: (step: number) => void;
+  onToggleEndingLine: (id: string) => void;
+  onChooseFinal: (choice: FinalChoice) => void;
+  onReplayEnding: () => void;
 }) {
   if (complete) {
     return (
-      <div className="final-complete">
-        <div className="final-left">
-          <p className="chapter-label">最终结论</p>
-          <h2>最后三页不是顾澄写的。</h2>
-          <p>
-            方岚已经为自己和两个孩子准备了车票、新名字与离开路线。11月18日晚，顾明海提前回家并发现了海城的纸条；西边卧室随后被锁上，钥匙仍由他控制。
-          </p>
-          <p>
-            日记不能证明火是被谁故意点燃的，却足以证明顾澄没有预谋纵火。最后三页否认车票、改写称呼，并反复强调“与爸爸无关”，其目的不是记录，而是制造一份替顾澄认罪的证词。
-          </p>
-          <p className="bounded-truth">
-            能够被证据支持的真相是：顾明海在火灾后补写最后三页，试图把责任推给已经无法开口的女儿，并掩盖方岚曾被反锁以及三人准备逃离的事实。
-          </p>
-        </div>
-        <div className="final-right">
-          <p className="last-date">{today}</p>
-          <p>今天没有下雨。</p>
-          <p className="new-writing">谢谢你没有相信最后三页。</p>
-          <p className="ending-note">
-            这行字的墨迹还没有干。
-            <br />
-            但你确定刚才翻到这里时，纸上什么也没有。
-          </p>
-          <div className="end-mark">终</div>
-        </div>
-      </div>
+      <EndingSequence
+        step={endingStep}
+        crossedLines={crossedLines}
+        finalChoice={finalChoice}
+        today={today}
+        onSetStep={onSetEndingStep}
+        onToggleLine={onToggleEndingLine}
+        onChooseFinal={onChooseFinal}
+        onReplay={onReplayEnding}
+      />
     );
   }
 
@@ -1630,6 +1755,200 @@ function FinalSpread({
           onHint={onHint}
           onUseAnswer={onUseAnswer}
         />
+      </div>
+    </div>
+  );
+}
+
+function EndingSequence({
+  step,
+  crossedLines,
+  finalChoice,
+  today,
+  onSetStep,
+  onToggleLine,
+  onChooseFinal,
+  onReplay,
+}: {
+  step: number;
+  crossedLines: string[];
+  finalChoice: FinalChoice | null;
+  today: string;
+  onSetStep: (step: number) => void;
+  onToggleLine: (id: string) => void;
+  onChooseFinal: (choice: FinalChoice) => void;
+  onReplay: () => void;
+}) {
+  const crossedEverything = endingLines.every((line) =>
+    crossedLines.includes(line.id),
+  );
+  const chosenEnding = finalChoice ? finalChoices[finalChoice] : null;
+
+  if (step === 0) {
+    return (
+      <div className="ending-sequence ending-verdict">
+        <div className="ending-step ending-step-left">
+          <p className="ending-kicker">结论成立</p>
+          <h2>最后三页不是顾澄写的。</h2>
+          <p className="verdict-context">
+            日记无法证明火是谁点燃的。它能证明的，是顾明海在火灾之后替死去的顾澄写下了一份认罪书。
+          </p>
+        </div>
+        <div className="ending-step ending-step-right">
+          <div className="ending-facts">
+            <p>门从外面锁上。</p>
+            <p>三张去海城的票已经买好。</p>
+            <p>最后三页只在做一件事：让死去的人独自负责。</p>
+          </div>
+          <p className="reader-thought">
+            我读到这里才明白，可怕的不是有人说了谎。是他知道，顾澄再也不能把那三页撕掉。
+          </p>
+          <button
+            className="ending-action"
+            type="button"
+            onClick={() => onSetStep(1)}
+          >
+            划掉伪造的结局
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <div className="ending-sequence ending-crossout">
+        <div className="ending-step ending-step-left">
+          <p className="ending-kicker">最后三页｜墨色较新</p>
+          <h2>把能够被日记推翻的话，亲手划掉。</h2>
+          <p className="ending-instruction">
+            这不是新的推理。你已经找到了答案。现在，只需要不再让这些话留在最后。
+          </p>
+        </div>
+        <div className="ending-step ending-step-right">
+          <div className="lie-lines">
+            {endingLines.map((line) => {
+              const crossed = crossedLines.includes(line.id);
+              return (
+                <button
+                  className={`lie-line ${crossed ? "crossed" : ""}`}
+                  type="button"
+                  key={line.id}
+                  onClick={() => onToggleLine(line.id)}
+                  aria-pressed={crossed}
+                >
+                  <span className="lie-text">“{line.lie}”</span>
+                  {crossed && <span className="correction">{line.truth}</span>}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            className="ending-action"
+            type="button"
+            disabled={!crossedEverything}
+            onClick={() => onSetStep(2)}
+          >
+            {crossedEverything ? "翻到封底的压痕" : "还有伪造的句子没有划掉"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 2) {
+    return (
+      <div className="ending-sequence ending-imprint">
+        <div className="ending-step ending-step-left imprint-page">
+          <p className="ending-kicker">封底压痕</p>
+          <p className="imprint-date">2004年11月18日 夜｜被后页压住的字</p>
+          <p className="imprint-text">
+            小船，如果你先出去了，就一直往车站走。
+          </p>
+          <p className="imprint-text">
+            不要回来。不是你丢下我，是我让你走的。
+          </p>
+          <p className="imprint-text">
+            你只要记得，我们今晚是要离开，不是要烧掉这个家。
+          </p>
+          <p className="imprint-signature">——顾澄</p>
+        </div>
+        <div className="ending-step ending-step-right">
+          <p className="reader-thought">
+            她最后留下的不是辩解，而是一条给弟弟的路。直到这一刻，我才第一次觉得顾澄不只是案卷里的名字。
+          </p>
+          <button
+            className="ending-action"
+            type="button"
+            onClick={() => onSetStep(3)}
+          >
+            在封底留下自己的页边批注
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 3 || !chosenEnding) {
+    return (
+      <div className="ending-sequence ending-choice-step">
+        <div className="ending-step ending-step-left">
+          <p className="ending-kicker">封底留白</p>
+          <h2>你准备让哪一句话，留在这本日记的最后？</h2>
+          <p className="ending-instruction">
+            这一次没有正确答案。你不是替她解释，只是决定自己会记住什么。
+          </p>
+        </div>
+        <div className="ending-step ending-step-right">
+          <div className="choice-list">
+            {(Object.keys(finalChoices) as FinalChoice[]).map((choice) => (
+              <button
+                className={`ending-choice ${
+                  finalChoice === choice ? "selected" : ""
+                }`}
+                type="button"
+                key={choice}
+                onClick={() => onChooseFinal(choice)}
+                aria-pressed={finalChoice === choice}
+              >
+                {finalChoices[choice].label}
+              </button>
+            ))}
+          </div>
+          <button
+            className="ending-action"
+            type="button"
+            disabled={!finalChoice}
+            onClick={() => onSetStep(4)}
+          >
+            写下这句话
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ending-sequence today-ending">
+      <div className="ending-step ending-step-left">
+        <p className="last-date">{today}</p>
+        <p>今天没有下雨。</p>
+        <p className="written-choice">你写下：{chosenEnding?.label}</p>
+      </div>
+      <div className="ending-step ending-step-right">
+        <p className="new-ink">{chosenEnding?.response}</p>
+        <p className="ending-coda">{chosenEnding?.coda}</p>
+        <p className="ending-note">
+          这行字的墨迹还没有干。
+          <br />
+          但你确定刚才翻到这里时，纸上什么也没有。
+        </p>
+        <div className="ending-finish">
+          <div className="end-mark">终</div>
+          <button className="replay-ending" type="button" onClick={onReplay}>
+            重新读一次结局
+          </button>
+        </div>
       </div>
     </div>
   );
