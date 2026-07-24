@@ -69,6 +69,7 @@ type SavedGame = {
   currentPage: number;
   collected: string[];
   completed: string[];
+  usedEvidence?: Record<string, string[]>;
   hintLevel?: Record<string, number>;
   finalComplete: boolean;
   endingStep?: number;
@@ -93,7 +94,7 @@ const endingLines = [
   {
     id: "father-clear",
     lie: "与爸爸、妈妈和弟弟都没有关系。",
-    truth: "钥匙一直在顾明海身上。方岚被锁在房内。",
+    truth: "西边卧室只能从走廊上锁。方岚曾在里面敲门，当时钥匙在顾明海身上。",
   },
 ] as const;
 
@@ -145,6 +146,10 @@ const pages: GamePage[] = [
           {
             id: "oct03-found",
             text: "新日记本的纸有一股潮味。妈妈说便宜本子都这样，晒两天就好了。",
+          },
+          {
+            id: "oct03-family",
+            text: "学校的家庭表上写着：妈妈方岚，爸爸顾明海，弟弟顾泊。只有在这里，我还是想叫他小泊。",
           },
           {
             id: "voice-smallboat",
@@ -427,7 +432,7 @@ const pages: GamePage[] = [
           },
           {
             id: "oct20-copy",
-            text: "妈妈以前配过一把，被他找到以后折断了。",
+            text: "妈妈以前给西边卧室配过一把备用钥匙，被那个人找到后折断了。现在能开门的，只剩他裤袋里的那把。",
           },
           {
             id: "oct20-dinner",
@@ -446,11 +451,11 @@ const pages: GamePage[] = [
         segments: [
           {
             id: "brother-cry",
-            text: "小船半夜哭了。他说妈妈就在房间里，为什么不开门。",
+            text: "小船半夜又听见妈妈从西边卧室里敲门，哭着问我，她明明在里面，为什么不开门。",
           },
           {
             id: "oct21-lie",
-            text: "我骗他说妈妈睡着了。其实敲门声一直没有停。",
+            text: "我骗他说妈妈睡着了。其实西边卧室里的敲门声一直没有停。",
           },
           {
             id: "oct21-father",
@@ -473,7 +478,7 @@ const pages: GamePage[] = [
       id: "trace-half-hai",
       title: "装订线里的半个字",
       text: "十月二十五日前一页靠近装订线处残着蓝色复写纸的碎屑，上面只剩半个“海”字。像有什么曾被夹在这里，又被抽走。",
-      thought: "顾明海翻过日记。他可能比十一月十八日更早知道她们要去哪。",
+      thought: "这个“海”可能来自海城，也可能来自顾明海。半个字还不能替我决定答案。",
     },
     entries: [
       {
@@ -491,7 +496,7 @@ const pages: GamePage[] = [
           },
           {
             id: "oct23-note",
-            text: "如果以后有人说门是从里面反锁的，那个人一定在撒谎。",
+            text: "我把门画在页边：锁舌和插销都在走廊一侧，房内只有一块平木板，根本没有能反锁的东西。",
           },
           {
             id: "oct23-weather",
@@ -571,9 +576,9 @@ const pages: GamePage[] = [
     ],
     maxPins: 3,
     conclusion:
-      "不是。西边卧室只能从走廊上锁，方岚曾被关在里面，唯一的钥匙由顾明海随身保管。",
+      "不是。西边卧室只能从走廊上锁，方岚曾从里面敲门；能开门的钥匙被顾明海随身收着，方岚配过的备用钥匙也被他折断。",
     afterword:
-      "“门打不开”不是火灾后的偶然。至少从十月中旬起，它就是顾明海控制方岚的手段。",
+      "“门打不开”不是一次偶然。至少从十月中旬起，它就是顾明海控制方岚的手段。",
     reflection:
       "我开始害怕的不是那扇门，而是顾澄把敲门声写得这么平静。她已经听过不止一次。",
     hints: [
@@ -824,7 +829,7 @@ const pages: GamePage[] = [
     afterword:
       "她们不是临时外出。新名字、三张票和逃生路线共同证明，这是一次经过长期准备的逃离。",
     reflection:
-      "这不是旅行计划。她们把活下去拆成时间、站台和三张票，只为了让一个八岁的孩子也能记住。",
+      "这不是旅行计划。她们把活下去拆成时间、站台和三张票，只为了让一个总会忘记新名字的孩子也能记住。",
     hints: [
       "方向：答案要同时说明时间、人数、日期和为什么那时安全。",
       "定位：出发时间在11月1日，人数在11月5日前后，日期在11月13日；作息证词在10月14日。",
@@ -834,7 +839,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "last-a",
     chapter: "第四册｜十一月十八日",
-    margin: "本页目标：摘录顾明海提前回家、方岚被带回卧室，以及取暖器发生的异常。",
+    margin: "本页目标：摘录顾明海提前回家、他发现海城纸条，以及卧室关门和取暖器发生的异常。",
     trace: {
       id: "trace-torn-order",
       title: "被撕去的一小角",
@@ -879,12 +884,12 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "last-b",
     chapter: "第五册｜最后三页",
-    margin: "本页目标：逐个比较父亲、弟弟、取暖器的称呼是否改变。",
+    margin: "本页目标：逐个比较父亲、弟弟、取暖器的称呼，并核对“22:40”的时间写法。",
     trace: {
       id: "trace-new-ink-fold",
       title: "墨水跨不过旧折痕",
       text: "最后三页似乎先被折过，后来才写字。新墨经过旧折痕时断成细小白线，说明这些字落下时，纸页早已不在原来的位置。",
-      thought: "这三页不只是后来写的。它们可能曾被抽走，又在火后夹回日记。",
+      thought: "这能证明纸页先被折过、后来才落墨，却不能仅凭折痕判断是谁写的、何时夹回来的。",
     },
     entries: [
       {
@@ -951,10 +956,6 @@ const pages: GamePage[] = [
             id: "forged-repeat",
             text: "这是我一个人的决定。",
           },
-          {
-            id: "forged-weather",
-            text: "这一页没有像此前每篇日记一样记录天气。",
-          },
         ],
       },
     ],
@@ -966,60 +967,64 @@ const pages: GamePage[] = [
     number: "04",
     question: "最后三页还是顾澄写的吗？",
     instruction:
-      "选择六条摘录：三条来自顾澄此前的固定称呼，三条来自最后三页中相互冲突的叫法。",
+      "选择八条摘录：比较顾澄对弟弟、父亲、取暖器和时间的固定写法，再与最后三页逐一核对。",
     requiredIds: [
       "voice-smallboat",
       "voice-thatman",
       "voice-sun",
+      "oct08-clock",
       "forged-father",
       "forged-brother",
       "forged-heater",
+      "forged-time",
     ],
     acceptedGroups: [
       ["voice-smallboat"],
       ["voice-thatman", "father-late", "oct10-quiet"],
       ["voice-sun", "oct14-smell", "heater-kick", "heater-warning"],
+      ["oct08-clock"],
       ["forged-father"],
       ["forged-brother"],
       ["forged-heater"],
+      ["forged-time"],
     ],
-    maxPins: 6,
+    maxPins: 8,
     conclusion:
       "不是。最后三页的作者知道顾澄家的事情，却不熟悉她最稳定的语言习惯。",
     afterword:
-      "“爸爸、弟弟、取暖器”看似更正式，恰好暴露了模仿者。顾澄从未这样称呼他们。",
+      "“爸爸、弟弟、取暖器”看似更正式，恰好暴露了模仿者；顾澄也明确写过自己只会写“十点四十”，而不是“22:40”。",
     reflection:
       "最后三页写得越肯定，就越不像日记。写它的人不是想让顾澄被理解，只想让她负责。",
     hints: [
-      "方向：把顾澄原来的三种称呼，与最后三页的新称呼逐一配对比较。",
-      "定位：原称呼集中在10月3日至6日；新称呼都在11月19日的前两页。",
+      "方向：比较四组习惯——弟弟、父亲、取暖器，以及顾澄怎样写十点四十。",
+      "定位：原写法集中在10月3日至8日；冲突写法都在11月19日的前两页。",
     ],
   },
   {
     kind: "final",
     id: "final",
     requiredIds: [
-      "key-pocket",
+      "lock-bolt",
       "mom-knock",
+      "key-pocket",
       "three-tickets",
-      "father-early",
-      "mother-bedroom",
+      "forged-father",
       "forged-alone",
       "forged-leave",
     ],
     acceptedGroups: [
-      ["key-pocket", "lock-bolt", "door-inside"],
+      ["lock-bolt", "door-inside", "oct23-note"],
       ["mom-knock", "brother-cry", "oct21-lie"],
+      ["key-pocket", "oct20-copy"],
       ["three-tickets", "aliases", "bag-tickets"],
-      ["father-early"],
-      ["mother-bedroom", "nov18-key"],
+      ["forged-father"],
       ["forged-alone"],
       ["forged-leave"],
     ],
     maxPins: 7,
     hints: [
-      "方向：最终结论只证明三件事——门锁由谁控制、三人是否准备离开、最后三页在替谁开脱。",
-      "定位：从10月的门锁记录、11月5日前后的离开计划、11月18日和最后三页中选择证据。",
+      "方向：最终结论只证明三件事——西边卧室如何被控制、三人是否准备离开、最后三页在替谁开脱。",
+      "定位：从10月的门锁记录、11月5日前后的离开计划，以及最后三页的三句辩解中选择证据。",
     ],
   },
 ];
@@ -1117,6 +1122,7 @@ export default function DiaryGame() {
   const [currentPage, setCurrentPage] = useState(0);
   const [collected, setCollected] = useState<string[]>([]);
   const [completed, setCompleted] = useState<string[]>([]);
+  const [usedEvidence, setUsedEvidence] = useState<Record<string, string[]>>({});
   const [pinned, setPinned] = useState<string[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -1178,6 +1184,30 @@ export default function DiaryGame() {
         );
         setCollected(Array.isArray(saved.collected) ? saved.collected : []);
         setCompleted(Array.isArray(saved.completed) ? saved.completed : []);
+        const restoredEvidence = Object.fromEntries(
+          Object.entries(saved.usedEvidence ?? {}).flatMap(
+            ([puzzleId, evidenceIds]) => {
+              const puzzle = pages.find(
+                (
+                  candidate,
+                ): candidate is DeductionPage | FinalPage =>
+                  (candidate.kind === "deduction" ||
+                    candidate.kind === "final") &&
+                  candidate.id === puzzleId,
+              );
+              if (!puzzle || !Array.isArray(evidenceIds)) return [];
+
+              const validIds = evidenceIds
+                .filter(
+                  (id): id is string =>
+                    typeof id === "string" && segmentLookup.has(id),
+                )
+                .slice(0, puzzle.maxPins);
+              return [[puzzleId, validIds]];
+            },
+          ),
+        );
+        setUsedEvidence(restoredEvidence);
         setHintLevel(saved.hintLevel ?? {});
         setFinalComplete(Boolean(saved.finalComplete));
         setEndingStep(
@@ -1232,6 +1262,7 @@ export default function DiaryGame() {
       currentPage,
       collected,
       completed,
+      usedEvidence,
       hintLevel,
       finalComplete,
       endingStep,
@@ -1245,6 +1276,7 @@ export default function DiaryGame() {
     currentPage,
     collected,
     completed,
+    usedEvidence,
     hintLevel,
     finalComplete,
     endingStep,
@@ -1293,6 +1325,13 @@ export default function DiaryGame() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [goNext, goPrevious, opened]);
 
+  useEffect(() => {
+    if (!resetArmed) return;
+
+    const timer = window.setTimeout(() => setResetArmed(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [resetArmed]);
+
   const progress = useMemo(
     () => Math.round(((currentPage + 1) / pages.length) * 100),
     [currentPage],
@@ -1314,7 +1353,13 @@ export default function DiaryGame() {
   }
 
   function togglePin(id: string) {
-    if (!activePuzzle) return;
+    if (
+      !activePuzzle ||
+      finalComplete ||
+      (page.kind === "deduction" && completed.includes(page.id))
+    ) {
+      return;
+    }
 
     if (pinned.includes(id)) {
       setPinned((items) => items.filter((item) => item !== id));
@@ -1347,6 +1392,10 @@ export default function DiaryGame() {
     setCompleted((items) =>
       items.includes(puzzle.id) ? items : [...items, puzzle.id],
     );
+    setUsedEvidence((current) => ({
+      ...current,
+      [puzzle.id]: [...pinned],
+    }));
     setMessage("推论成立。纸页右下角可以继续翻动了。");
     setDrawerOpen(false);
     setPinned([]);
@@ -1374,6 +1423,10 @@ export default function DiaryGame() {
       return;
     }
 
+    setUsedEvidence((current) => ({
+      ...current,
+      final: [...pinned],
+    }));
     setFinalComplete(true);
     setEndingStep(0);
     setCrossedLines([]);
@@ -1432,6 +1485,7 @@ export default function DiaryGame() {
     setCurrentPage(0);
     setCollected([]);
     setCompleted([]);
+    setUsedEvidence({});
     setPinned([]);
     setDrawerOpen(false);
     setMessage("");
@@ -1482,7 +1536,10 @@ export default function DiaryGame() {
           <button
             className="open-book-button"
             type="button"
-            onClick={() => setOpened(true)}
+            onClick={() => {
+              setResetArmed(false);
+              setOpened(true);
+            }}
           >
             {hasReadingProgress ? "从书签处继续" : "打开日记"}
           </button>
@@ -1497,7 +1554,7 @@ export default function DiaryGame() {
         </section>
         {hasReadingProgress && (
           <button className="reset-outside" type="button" onClick={resetGame}>
-            {resetArmed ? "再次点击，清空全部阅读记录" : "从头阅读"}
+            {resetArmed ? "5秒内再次点击，清空全部阅读记录" : "从头阅读"}
           </button>
         )}
       </main>
@@ -1587,6 +1644,7 @@ export default function DiaryGame() {
               page={page}
               completed={completed.includes(page.id)}
               pinned={pinned}
+              submittedEvidence={usedEvidence[page.id] ?? page.requiredIds}
               onOpenDrawer={() => setDrawerOpen(true)}
               onSubmit={() => submitDeduction(page)}
               hintLevel={hintLevel[page.id] ?? 0}
@@ -1683,7 +1741,11 @@ export default function DiaryGame() {
           collected={collected}
           pinned={pinned}
           maxPins={activePuzzle?.maxPins ?? 0}
-          puzzleActive={Boolean(activePuzzle) && !finalComplete}
+          puzzleActive={
+            Boolean(activePuzzle) &&
+            !finalComplete &&
+            !(page.kind === "deduction" && completed.includes(page.id))
+          }
           onClose={() => setDrawerOpen(false)}
           onTogglePin={togglePin}
           onRemove={toggleCollect}
@@ -1831,6 +1893,7 @@ function DeductionSpread({
   page,
   completed,
   pinned,
+  submittedEvidence,
   onOpenDrawer,
   onSubmit,
   hintLevel,
@@ -1840,12 +1903,15 @@ function DeductionSpread({
   page: DeductionPage;
   completed: boolean;
   pinned: string[];
+  submittedEvidence: string[];
   onOpenDrawer: () => void;
   onSubmit: () => void;
   hintLevel: number;
   onHint: () => void;
   onUseAnswer: () => void;
 }) {
+  const displayedEvidence = completed ? submittedEvidence : pinned;
+
   return (
     <div className="deduction-spread">
       <div className="deduction-left">
@@ -1855,7 +1921,7 @@ function DeductionSpread({
         <p>{page.instruction}</p>
         <div className="pinned-lines">
           {Array.from({ length: page.maxPins }, (_, index) => {
-            const source = segmentLookup.get(pinned[index]);
+            const source = segmentLookup.get(displayedEvidence[index]);
             return (
               <div
                 className={source ? "pin-slot filled" : "pin-slot"}
@@ -1867,9 +1933,11 @@ function DeductionSpread({
           })}
         </div>
         <div className="deduction-actions">
-          <button type="button" onClick={onOpenDrawer}>
-            从页边摘录中选择
-          </button>
+          {!completed && (
+            <button type="button" onClick={onOpenDrawer}>
+              从页边摘录中选择
+            </button>
+          )}
           <button type="button" onClick={onSubmit} disabled={completed}>
             {completed ? "推论已成立" : "形成推论"}
           </button>
@@ -2018,17 +2086,17 @@ function EndingSequence({
           <p className="ending-kicker">结论成立</p>
           <h2>最后三页不是顾澄写的。</h2>
           <p className="verdict-context">
-            日记无法证明火是谁点燃的。它能证明的，是顾明海在火灾之后替死去的顾澄写下了一份认罪书。
+            日记无法证明火是谁点燃的，也不能仅凭这些文字确定代写者。它能证明的是：最后三页违背了顾澄稳定的写作习惯，抹去了已有的逃离计划，并反复替父亲开脱。
           </p>
         </div>
         <div className="ending-step ending-step-right">
           <div className="ending-facts">
-            <p>门从外面锁上。</p>
+            <p>西边卧室只能从走廊上锁。</p>
             <p>三张去海城的票已经买好。</p>
-            <p>最后三页只在做一件事：让死去的人独自负责。</p>
+            <p>最后三页声称父亲无辜，并让顾澄独自负责。</p>
           </div>
           <p className="reader-thought">
-            我读到这里才明白，可怕的不是有人说了谎。是他知道，顾澄再也不能把那三页撕掉。
+            我读到这里才明白，可怕的不只是有人说了谎，而是那些字把顾澄在前面留下的每一次求生都改写成了认罪。
           </p>
           <button
             className="ending-action"
@@ -2090,13 +2158,13 @@ function EndingSequence({
           <p className="ending-kicker">封底压痕</p>
           <p className="imprint-date">2004年11月18日 夜｜被后页压住的字</p>
           <p className="imprint-text">
-            小船，如果你先出去了，就一直往车站走。
+            小船，如果明天你先出去了，就一直往车站走。
           </p>
           <p className="imprint-text">
             不要回来。不是你丢下我，是我让你走的。
           </p>
           <p className="imprint-text">
-            你只要记得，我们今晚是要离开，不是要烧掉这个家。
+            你只要记得，我们明天下午是要离开，不是要烧掉这个家。
           </p>
           <p className="imprint-signature">——顾澄</p>
         </div>

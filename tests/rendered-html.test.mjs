@@ -23,6 +23,48 @@ async function render() {
   );
 }
 
+async function loadDiarySource() {
+  return readFile(new URL("../app/DiaryGame.tsx", import.meta.url), "utf8");
+}
+
+function extractPages(source) {
+  const marker = "const pages: GamePage[] = ";
+  const start = source.indexOf(marker) + marker.length;
+  assert.ok(start >= marker.length, "pages data should exist");
+
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+  let end = -1;
+
+  for (let index = start; index < source.length; index += 1) {
+    const character = source[index];
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === quote) quote = null;
+      continue;
+    }
+
+    if (character === '"' || character === "'" || character === "`") {
+      quote = character;
+      continue;
+    }
+
+    if (character === "[" || character === "{" || character === "(") depth += 1;
+    if (character === "]" || character === "}" || character === ")") {
+      depth -= 1;
+      if (depth === 0 && character === "]") {
+        end = index + 1;
+        break;
+      }
+    }
+  }
+
+  assert.ok(end > start, "pages data should be a complete array");
+  return Function(`"use strict"; return (${source.slice(start, end)});`)();
+}
+
 test("server renders the finished diary game shell", async () => {
   const response = await render();
   assert.equal(response.status, 200);
@@ -35,10 +77,7 @@ test("server renders the finished diary game shell", async () => {
 });
 
 test("the diary contains the complete evidence and conclusion loop", async () => {
-  const source = await readFile(
-    new URL("../app/DiaryGame.tsx", import.meta.url),
-    "utf8",
-  );
+  const source = await loadDiarySource();
 
   assert.match(source, /voice-smallboat/);
   assert.match(source, /lock-bolt/);
@@ -61,4 +100,94 @@ test("the diary contains the complete evidence and conclusion loop", async () =>
   assert.doesNotMatch(source, />归类</);
   assert.match(source, /当前推理已选/);
   assert.match(source, /移出推理/);
+  assert.match(source, /usedEvidence/);
+  assert.match(source, /setTimeout\(\(\) => setResetArmed\(false\), 5000\)/);
+  assert.doesNotMatch(source, /forged-weather/);
+  assert.doesNotMatch(source, /顾明海在火灾之后替死去的顾澄/);
+  assert.doesNotMatch(source, /我们今晚是要离开/);
+  assert.match(source, /不能仅凭这些文字确定代写者/);
+});
+
+test("every puzzle is solvable from earlier, internally consistent evidence", async () => {
+  const source = await loadDiarySource();
+  const pages = extractPages(source);
+  const seenPageIds = new Set();
+  const seenSegmentIds = new Set();
+  const availableEvidence = new Set();
+  const weekdayNames = [
+    "星期日",
+    "星期一",
+    "星期二",
+    "星期三",
+    "星期四",
+    "星期五",
+    "星期六",
+  ];
+
+  for (const page of pages) {
+    assert.ok(!seenPageIds.has(page.id), `duplicate page id: ${page.id}`);
+    seenPageIds.add(page.id);
+
+    if (page.kind === "reading") {
+      for (const entry of page.entries) {
+        const dateParts = entry.date.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+        if (dateParts) {
+          const date = new Date(
+            Date.UTC(
+              Number(dateParts[1]),
+              Number(dateParts[2]) - 1,
+              Number(dateParts[3]),
+            ),
+          );
+          assert.equal(
+            entry.weekday,
+            weekdayNames[date.getUTCDay()],
+            `${entry.date} has the wrong weekday`,
+          );
+        }
+
+        for (const segment of entry.segments) {
+          assert.ok(
+            !seenSegmentIds.has(segment.id),
+            `duplicate segment id: ${segment.id}`,
+          );
+          seenSegmentIds.add(segment.id);
+          availableEvidence.add(segment.id);
+        }
+      }
+    }
+
+    if (page.kind === "deduction" || page.kind === "final") {
+      assert.equal(page.maxPins, page.requiredIds.length, `${page.id} required evidence`);
+      assert.equal(
+        page.maxPins,
+        page.acceptedGroups.length,
+        `${page.id} accepted evidence groups`,
+      );
+
+      for (const evidenceId of page.requiredIds) {
+        assert.ok(
+          availableEvidence.has(evidenceId),
+          `${page.id} requires unavailable evidence: ${evidenceId}`,
+        );
+      }
+      for (const group of page.acceptedGroups) {
+        assert.ok(group.length > 0, `${page.id} has an empty evidence group`);
+        for (const evidenceId of group) {
+          assert.ok(
+            availableEvidence.has(evidenceId),
+            `${page.id} accepts unavailable evidence: ${evidenceId}`,
+          );
+        }
+      }
+    }
+  }
+
+  const authorPuzzle = pages.find((page) => page.id === "author");
+  assert.ok(authorPuzzle.requiredIds.includes("oct08-clock"));
+  assert.ok(authorPuzzle.requiredIds.includes("forged-time"));
+
+  const finalPuzzle = pages.find((page) => page.id === "final");
+  assert.ok(!finalPuzzle.requiredIds.includes("mother-bedroom"));
+  assert.ok(!finalPuzzle.requiredIds.includes("nov18-key"));
 });
