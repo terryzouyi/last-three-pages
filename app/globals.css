@@ -896,6 +896,12 @@ select:focus-visible {
   border-bottom: 1px solid rgba(71, 55, 42, 0.24);
 }
 
+.hint-block {
+  max-height: 560px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .pencil-label {
   margin: 0 0 18px;
   color: #70716c;
@@ -932,6 +938,119 @@ select:focus-visible {
   content: "—";
 }
 
+.hint-guide {
+  display: grid;
+  gap: 13px;
+}
+
+.hint-roadmap {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.hint-roadmap span {
+  padding: 7px 4px;
+  border-bottom: 2px solid rgba(83, 65, 47, 0.14);
+  color: rgba(86, 75, 64, 0.48);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.hint-roadmap span.current {
+  border-bottom-color: rgba(123, 45, 37, 0.55);
+  color: #702b25;
+}
+
+.hint-roadmap span.done {
+  border-bottom-color: rgba(74, 91, 71, 0.5);
+  color: #4d624d;
+}
+
+.hint-stage {
+  padding: 11px 13px;
+  border-left: 2px solid rgba(112, 53, 43, 0.36);
+  background: rgba(118, 82, 52, 0.055);
+}
+
+.hint-stage > span {
+  color: #7a3028;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+.hint-stage > p {
+  margin: 7px 0 0;
+  color: #5a5147;
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.answer-warning {
+  margin: 0;
+  padding: 9px 11px;
+  color: #6d342e !important;
+  background: rgba(122, 44, 36, 0.05);
+  font-size: 11px !important;
+  line-height: 1.65 !important;
+}
+
+.answer-reveal {
+  padding: 12px;
+  border: 1px solid rgba(120, 44, 36, 0.28);
+  background: rgba(246, 235, 215, 0.38);
+}
+
+.answer-title {
+  margin: 0 0 9px;
+  color: #752a24 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.1em;
+}
+
+.answer-quote {
+  margin-bottom: 7px;
+  padding: 8px 9px;
+  border-bottom: 1px solid rgba(84, 65, 47, 0.13);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.answer-quote time {
+  color: #7b6f61;
+  font-size: 9px;
+}
+
+.answer-quote p {
+  margin: 4px 0 0;
+  color: #493e34;
+  font-family: "Kaiti SC", "STKaiti", cursive;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.hint-block .use-answer-button,
+.final-hints .use-answer-button {
+  width: 100%;
+  margin-top: 5px;
+  border-color: rgba(113, 37, 31, 0.5);
+  color: #f0e3cf;
+  background: #762b24;
+}
+
+.answer-note {
+  margin: 7px 0 0;
+  color: #7d7469 !important;
+  font-size: 9px !important;
+  text-align: center;
+}
+
+.hint-next-button {
+  justify-self: start;
+}
+
 /* Final */
 
 .final-question,
@@ -965,6 +1084,13 @@ select:focus-visible {
 
 .final-hints {
   align-self: center;
+}
+
+.final-hints .hint-guide {
+  max-height: 475px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
 }
 
 .final-hints > p {

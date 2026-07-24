@@ -35,6 +35,7 @@ type DeductionPage = {
   question: string;
   instruction: string;
   requiredIds: string[];
+  acceptedGroups: string[][];
   maxPins: number;
   conclusion: string;
   afterword: string;
@@ -45,6 +46,7 @@ type FinalPage = {
   kind: "final";
   id: "final";
   requiredIds: string[];
+  acceptedGroups: string[][];
   maxPins: number;
   hints: string[];
 };
@@ -57,6 +59,7 @@ type SavedGame = {
   collected: string[];
   completed: string[];
   tags: Record<string, string>;
+  hintLevel?: Record<string, number>;
   finalComplete: boolean;
 };
 
@@ -73,7 +76,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "voice-a",
     chapter: "第一册｜她如何说话",
-    margin: "先别猜发生了什么。记住她平常怎样称呼身边的人。",
+    margin: "本页目标：摘录顾澄对弟弟和父亲的固定称呼。",
     entries: [
       {
         date: "2004年10月3日",
@@ -127,7 +130,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "voice-b",
     chapter: "第一册｜她如何说话",
-    margin: "同一个东西，她会不会一直使用同一种叫法？",
+    margin: "本页目标：找到顾澄对取暖器的固定称呼，并留意她写时间的习惯。",
     entries: [
       {
         date: "2004年10月6日",
@@ -181,7 +184,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "voice-c",
     chapter: "第一册｜她如何说话",
-    margin: "日常细节不是背景。它们是辨认一个写作者的指纹。",
+    margin: "本页目标：继续熟悉顾澄的语气；暂时不用推测火灾。",
     entries: [
       {
         date: "2004年10月10日",
@@ -235,7 +238,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "voice-d",
     chapter: "第一册｜她如何说话",
-    margin: "这一页里，还有一条以后会用到的时间证词。",
+    margin: "本页目标：摘录顾明海通常几点回家，这条证词以后还会使用。",
     entries: [
       {
         date: "2004年10月14日",
@@ -271,21 +274,26 @@ const pages: GamePage[] = [
     instruction:
       "从摘录中选出三句话。答案必须同时说明她怎样称呼弟弟、父亲和取暖器。",
     requiredIds: ["voice-smallboat", "voice-thatman", "voice-sun"],
+    acceptedGroups: [
+      ["voice-smallboat"],
+      ["voice-thatman", "father-late", "oct10-quiet"],
+      ["voice-sun", "oct14-smell"],
+    ],
     maxPins: 3,
     conclusion:
       "顾澄称弟弟为“小船”，称父亲为“那个人”，称取暖器为“小太阳”。",
     afterword:
       "这些称呼并非偶然。它们在她的文字里反复出现，会成为辨认最后几页作者的依据。",
     hints: [
-      "不要选择人物做过什么，只选择顾澄给他们起的称呼。",
-      "需要一条关于小泊、一条关于父亲、一条关于取暖器的摘录。",
+      "方向：不要选人物做过什么，只找顾澄给他们起的称呼。",
+      "定位：答案分别在10月3日、10月4日和10月6日。",
     ],
   },
   {
     kind: "reading",
     id: "lock-a",
     chapter: "第二册｜门为什么打不开",
-    margin: "不要急着解释。先确定门锁的方向、钥匙的位置和屋内的人。",
+    margin: "本页目标：摘录锁舌朝向，以及方岚人在房内的直接证据。",
     entries: [
       {
         date: "2004年10月16日",
@@ -339,7 +347,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "lock-b",
     chapter: "第二册｜门为什么打不开",
-    margin: "如果门只是坏了，谁应该能够打开它？",
+    margin: "本页目标：确认钥匙由谁保管，以及房内的人能否自行开门。",
     entries: [
       {
         date: "2004年10月20日",
@@ -393,7 +401,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "lock-c",
     chapter: "第二册｜门为什么打不开",
-    margin: "顾澄开始有意识地留下能被别人复述的事实。",
+    margin: "本页目标：验证门是否可能从里面反锁；相近证据同样有效。",
     entries: [
       {
         date: "2004年10月23日",
@@ -447,7 +455,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "lock-d",
     chapter: "第二册｜门为什么打不开",
-    margin: "危险并不只来自门。留意取暖器在争执中发生过什么。",
+    margin: "本页目标：记录取暖器在争执中曾经发生过的危险。",
     entries: [
       {
         date: "2004年10月27日",
@@ -483,21 +491,26 @@ const pages: GamePage[] = [
     instruction:
       "选出三句话，分别证明锁的方向、房间里有人，以及钥匙由谁控制。",
     requiredIds: ["lock-bolt", "mom-knock", "key-pocket"],
+    acceptedGroups: [
+      ["lock-bolt", "door-inside", "oct23-note"],
+      ["mom-knock", "brother-cry", "oct21-lie"],
+      ["key-pocket", "oct20-copy"],
+    ],
     maxPins: 3,
     conclusion:
       "不是。西边卧室只能从走廊上锁，方岚曾被关在里面，唯一的钥匙由顾明海随身保管。",
     afterword:
       "“门打不开”不是火灾后的偶然。至少从十月中旬起，它就是顾明海控制方岚的手段。",
     hints: [
-      "需要三种不同性质的证据：门锁结构、屋内动静、钥匙位置。",
-      "十月十六日、十八日和二十日各有一句关键文字。",
+      "方向：需要三类证据——门锁结构、房内动静、钥匙归属。",
+      "定位：重点回看10月16日、10月18日和10月20日；10月21日、23日也有可替代证据。",
     ],
   },
   {
     kind: "reading",
     id: "leave-a",
     chapter: "第三册｜她们要去哪里",
-    margin: "重要信息被分散在不同日期。把地名、时间和人数连起来。",
+    margin: "本页目标：摘录目的地和末班车出发时间。",
     entries: [
       {
         date: "2004年10月29日",
@@ -551,7 +564,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "leave-b",
     chapter: "第三册｜她们要去哪里",
-    margin: "为什么一次普通出行需要新名字和三张车票？",
+    margin: "本页目标：摘录同行人数；新名字和三张车票都能证明这是逃离计划。",
     entries: [
       {
         date: "2004年11月3日",
@@ -605,7 +618,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "leave-c",
     chapter: "第三册｜她们要去哪里",
-    margin: "路线练习的终点不是房间，而是屋外。",
+    margin: "本页目标：确认车票藏处与离开屋子的路线。",
     entries: [
       {
         date: "2004年11月8日",
@@ -659,7 +672,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "leave-d",
     chapter: "第三册｜她们要去哪里",
-    margin: "利用先前记录过的作息，判断计划为何选择星期五。",
+    margin: "本页目标：找到具体日期，并用顾明海的作息解释为何选择这一天。",
     entries: [
       {
         date: "2004年11月13日",
@@ -718,21 +731,27 @@ const pages: GamePage[] = [
     instruction:
       "选出四句话，证明出发时间、同行人数、具体日期，以及这个时间为何安全。",
     requiredIds: ["bus-time", "three-tickets", "friday-plan", "father-late"],
+    acceptedGroups: [
+      ["bus-time", "nov13-promise"],
+      ["three-tickets", "aliases", "bag-tickets"],
+      ["friday-plan", "nov13-calendar", "nov15-count"],
+      ["father-late", "friday-plan"],
+    ],
     maxPins: 4,
     conclusion:
       "方岚准备在11月19日星期五，带顾澄和小泊乘下午四点二十的末班车离开。",
     afterword:
       "她们不是临时外出。新名字、三张票和逃生路线共同证明，这是一次经过长期准备的逃离。",
     hints: [
-      "出发时间在十一月一日；人数在十一月五日。",
-      "日期在十一月十三日。还需要十月里关于顾明海作息的一句话。",
+      "方向：答案要同时说明时间、人数、日期和为什么那时安全。",
+      "定位：出发时间在11月1日，人数在11月5日前后，日期在11月13日；作息证词在10月14日。",
     ],
   },
   {
     kind: "reading",
     id: "last-a",
     chapter: "第四册｜十一月十八日",
-    margin: "这是目前最后一篇保持原有习惯的日记。",
+    margin: "本页目标：摘录顾明海提前回家、方岚被带回卧室，以及取暖器发生的异常。",
     entries: [
       {
         date: "2004年11月18日",
@@ -771,7 +790,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "last-b",
     chapter: "第五册｜最后三页",
-    margin: "不要因为它写得肯定，就把它当成事实。和前面的文字逐句比较。",
+    margin: "本页目标：逐个比较父亲、弟弟、取暖器的称呼是否改变。",
     entries: [
       {
         date: "2004年11月19日",
@@ -823,7 +842,7 @@ const pages: GamePage[] = [
     kind: "reading",
     id: "last-c",
     chapter: "第五册｜最后三页",
-    margin: "第三页只有很少的字。她一直坚持写下的东西，这里缺席了。",
+    margin: "本页目标：留意重复强调的句子，以及此前每篇都有、这里却缺少的内容。",
     entries: [
       {
         date: "2004年11月19日｜末页",
@@ -861,14 +880,22 @@ const pages: GamePage[] = [
       "forged-brother",
       "forged-heater",
     ],
+    acceptedGroups: [
+      ["voice-smallboat"],
+      ["voice-thatman", "father-late", "oct10-quiet"],
+      ["voice-sun", "oct14-smell", "heater-kick", "heater-warning"],
+      ["forged-father"],
+      ["forged-brother"],
+      ["forged-heater"],
+    ],
     maxPins: 6,
     conclusion:
       "不是。最后三页的作者知道顾澄家的事情，却不熟悉她最稳定的语言习惯。",
     afterword:
       "“爸爸、弟弟、取暖器”看似更正式，恰好暴露了模仿者。顾澄从未这样称呼他们。",
     hints: [
-      "把第一道推理的三条摘录重新用一次。",
-      "在最后三页中，分别找出父亲、弟弟和取暖器的新称呼。",
+      "方向：把顾澄原来的三种称呼，与最后三页的新称呼逐一配对比较。",
+      "定位：原称呼集中在10月3日至6日；新称呼都在11月19日的前两页。",
     ],
   },
   {
@@ -883,10 +910,19 @@ const pages: GamePage[] = [
       "forged-alone",
       "forged-leave",
     ],
+    acceptedGroups: [
+      ["key-pocket", "lock-bolt", "door-inside"],
+      ["mom-knock", "brother-cry", "oct21-lie"],
+      ["three-tickets", "aliases", "bag-tickets"],
+      ["father-early"],
+      ["mother-bedroom", "nov18-key"],
+      ["forged-alone"],
+      ["forged-leave"],
+    ],
     maxPins: 7,
     hints: [
-      "最终结论需要说明三件事：谁控制门锁、她们是否计划离开、最后三页试图否认什么。",
-      "从门锁、车票、十一月十八日和伪造文字中，各选择能够直接支持结论的原句。",
+      "方向：最终结论只证明三件事——门锁由谁控制、三人是否准备离开、最后三页在替谁开脱。",
+      "定位：从10月的门锁记录、11月5日前后的离开计划、11月18日和最后三页中选择证据。",
     ],
   },
 ];
@@ -914,6 +950,24 @@ for (const entry of allEntries) {
 
 function isDeduction(page: GamePage): page is DeductionPage {
   return page.kind === "deduction";
+}
+
+function satisfiesEvidenceGroups(pinned: string[], groups: string[][]) {
+  function matchGroup(groupIndex: number, used: Set<string>): boolean {
+    if (groupIndex >= groups.length) return true;
+
+    for (const id of groups[groupIndex]) {
+      if (!pinned.includes(id) || used.has(id)) continue;
+
+      const nextUsed = new Set(used);
+      nextUsed.add(id);
+      if (matchGroup(groupIndex + 1, nextUsed)) return true;
+    }
+
+    return false;
+  }
+
+  return matchGroup(0, new Set());
 }
 
 export default function DiaryGame() {
@@ -947,6 +1001,7 @@ export default function DiaryGame() {
         setCollected(Array.isArray(saved.collected) ? saved.collected : []);
         setCompleted(Array.isArray(saved.completed) ? saved.completed : []);
         setTags(saved.tags ?? {});
+        setHintLevel(saved.hintLevel ?? {});
         setFinalComplete(Boolean(saved.finalComplete));
       }
     } catch {
@@ -972,6 +1027,7 @@ export default function DiaryGame() {
       collected,
       completed,
       tags,
+      hintLevel,
       finalComplete,
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
@@ -981,6 +1037,7 @@ export default function DiaryGame() {
     collected,
     completed,
     tags,
+    hintLevel,
     finalComplete,
     hydrated,
   ]);
@@ -1066,9 +1123,11 @@ export default function DiaryGame() {
       return;
     }
 
-    const correct = puzzle.requiredIds.every((id) => pinned.includes(id));
+    const correct = satisfiesEvidenceGroups(pinned, puzzle.acceptedGroups);
     if (!correct) {
-      setMessage("这些摘录还不能共同支持结论。检查是否混入了背景信息。");
+      setMessage(
+        "这些摘录仍缺少一种必要事实。相同含义的句子可以替代，不必逐字命中标准答案。",
+      );
       return;
     }
 
@@ -1091,7 +1150,10 @@ export default function DiaryGame() {
       return;
     }
 
-    const correct = finalPage.requiredIds.every((id) => pinned.includes(id));
+    const correct = satisfiesEvidenceGroups(
+      pinned,
+      finalPage.acceptedGroups,
+    );
     if (!correct) {
       setMessage(
         "这个结论仍有越过证据的地方。只保留能直接证明门锁、离开计划和伪造目的的原句。",
@@ -1106,8 +1168,20 @@ export default function DiaryGame() {
   }
 
   function revealHint(id: string, hints: string[]) {
-    const next = Math.min((hintLevel[id] ?? 0) + 1, hints.length);
+    const next = Math.min((hintLevel[id] ?? 0) + 1, hints.length + 1);
     setHintLevel((current) => ({ ...current, [id]: next }));
+  }
+
+  function useCorrectEvidence(ids: string[]) {
+    setCollected((items) => Array.from(new Set([...items, ...ids])));
+    setTags((current) => {
+      const next = { ...current };
+      for (const id of ids) next[id] ??= "未分类";
+      return next;
+    });
+    setPinned(ids);
+    setDrawerOpen(false);
+    setMessage("正确摘录已放入当前推理；你仍需要亲手确认并形成结论。");
   }
 
   function resetGame() {
@@ -1228,11 +1302,13 @@ export default function DiaryGame() {
               onSubmit={() => submitDeduction(page)}
               hintLevel={hintLevel[page.id] ?? 0}
               onHint={() => revealHint(page.id, page.hints)}
+              onUseAnswer={() => useCorrectEvidence(page.requiredIds)}
             />
           )}
 
           {page.kind === "final" && (
             <FinalSpread
+              page={page}
               complete={finalComplete}
               pinned={pinned}
               today={today}
@@ -1240,6 +1316,7 @@ export default function DiaryGame() {
               onSubmit={submitFinal}
               hintLevel={hintLevel.final ?? 0}
               onHint={() => revealHint("final", page.hints)}
+              onUseAnswer={() => useCorrectEvidence(page.requiredIds)}
             />
           )}
 
@@ -1337,6 +1414,7 @@ function Frontispiece({
             <li>点击任何一句你认为重要的话，把它抄入页边摘录。</li>
             <li>前后翻页，比较时间、称呼和互相矛盾的说法。</li>
             <li>在推理页选择原文作为证据。结论不能超过证据。</li>
+            <li>提示按“方向—日期—正确摘录”递进，第三层可直接使用答案。</li>
           </ol>
         </div>
         {collectedCount > 0 && (
@@ -1407,6 +1485,7 @@ function DeductionSpread({
   onSubmit,
   hintLevel,
   onHint,
+  onUseAnswer,
 }: {
   page: DeductionPage;
   completed: boolean;
@@ -1415,6 +1494,7 @@ function DeductionSpread({
   onSubmit: () => void;
   hintLevel: number;
   onHint: () => void;
+  onUseAnswer: () => void;
 }) {
   return (
     <div className="deduction-spread">
@@ -1454,19 +1534,13 @@ function DeductionSpread({
           </div>
         ) : (
           <div className="hint-block">
-            <p>卡住时，可以逐步查看顾澄留下的页边记号。</p>
-            {page.hints.slice(0, hintLevel).map((hint) => (
-              <p className="hint-line" key={hint}>
-                {hint}
-              </p>
-            ))}
-            <button
-              type="button"
-              onClick={onHint}
-              disabled={hintLevel >= page.hints.length}
-            >
-              {hintLevel >= page.hints.length ? "提示已经全部展开" : "看一条提示"}
-            </button>
+            <HintGuide
+              hints={page.hints}
+              hintLevel={hintLevel}
+              answerIds={page.requiredIds}
+              onHint={onHint}
+              onUseAnswer={onUseAnswer}
+            />
           </div>
         )}
       </div>
@@ -1475,6 +1549,7 @@ function DeductionSpread({
 }
 
 function FinalSpread({
+  page,
   complete,
   pinned,
   today,
@@ -1482,7 +1557,9 @@ function FinalSpread({
   onSubmit,
   hintLevel,
   onHint,
+  onUseAnswer,
 }: {
+  page: FinalPage;
   complete: boolean;
   pinned: string[];
   today: string;
@@ -1490,6 +1567,7 @@ function FinalSpread({
   onSubmit: () => void;
   hintLevel: number;
   onHint: () => void;
+  onUseAnswer: () => void;
 }) {
   if (complete) {
     return (
@@ -1531,7 +1609,7 @@ function FinalSpread({
           选择七条原文，组成一个不超过证据的结论。不要把推测写成已经发生的事实。
         </p>
         <div className="final-pin-count">
-          已选 {pinned.length} / 7 条摘录
+          已选 {pinned.length} / {page.maxPins} 条摘录
         </div>
         <button type="button" onClick={onOpenDrawer}>
           选择最终证据
@@ -1545,24 +1623,99 @@ function FinalSpread({
         <p>
           你不需要证明火是怎样点燃的。日记没有提供足够信息，声称知道反而是不诚实的。
         </p>
-        {[
-          "先证明顾明海掌握钥匙，并且方岚确实被关在房内。",
-          "再证明三人确实准备离开，以及最后三页为何要否认这件事。",
-        ]
-          .slice(0, hintLevel)
-          .map((hint) => (
-            <p className="hint-line" key={hint}>
-              {hint}
-            </p>
-          ))}
-        <button
-          type="button"
-          onClick={onHint}
-          disabled={hintLevel >= 2}
-        >
-          {hintLevel >= 2 ? "提示已经全部展开" : "看一条提示"}
-        </button>
+        <HintGuide
+          hints={page.hints}
+          hintLevel={hintLevel}
+          answerIds={page.requiredIds}
+          onHint={onHint}
+          onUseAnswer={onUseAnswer}
+        />
       </div>
+    </div>
+  );
+}
+
+function HintGuide({
+  hints,
+  hintLevel,
+  answerIds,
+  onHint,
+  onUseAnswer,
+}: {
+  hints: string[];
+  hintLevel: number;
+  answerIds: string[];
+  onHint: () => void;
+  onUseAnswer: () => void;
+}) {
+  const answerVisible = hintLevel > hints.length;
+  const labels = ["方向提示", "日期定位"];
+  const nextLabel =
+    hintLevel === 0
+      ? "查看方向提示"
+      : hintLevel === 1
+        ? "查看日期定位"
+        : hintLevel === 2
+          ? "直接显示正确摘录"
+          : "正确摘录已显示";
+
+  return (
+    <div className="hint-guide">
+      <div className="hint-roadmap" aria-label="提示进度">
+        <span className={hintLevel >= 1 ? "done" : "current"}>1 方向</span>
+        <span className={hintLevel >= 2 ? "done" : hintLevel === 1 ? "current" : ""}>
+          2 日期
+        </span>
+        <span className={answerVisible ? "done" : hintLevel === 2 ? "current" : ""}>
+          3 答案
+        </span>
+      </div>
+
+      {hints.slice(0, Math.min(hintLevel, hints.length)).map((hint, index) => (
+        <div className="hint-stage" key={hint}>
+          <span>{labels[index] ?? `提示 ${index + 1}`}</span>
+          <p>{hint}</p>
+        </div>
+      ))}
+
+      {hintLevel === hints.length && (
+        <p className="answer-warning">
+          如果仍然卡住，下一步会直接显示本题可用的正确摘录，不再只给方向。
+        </p>
+      )}
+
+      {answerVisible && (
+        <div className="answer-reveal">
+          <p className="answer-title">本题正确摘录</p>
+          {answerIds.map((id) => {
+            const source = segmentLookup.get(id);
+            if (!source) return null;
+            return (
+              <article className="answer-quote" key={id}>
+                <time>{source.date}</time>
+                <p>“{source.segment.text}”</p>
+              </article>
+            );
+          })}
+          <button
+            type="button"
+            className="use-answer-button"
+            onClick={onUseAnswer}
+          >
+            将正确摘录放入当前推理
+          </button>
+          <p className="answer-note">此操作不会自动提交结论。</p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="hint-next-button"
+        onClick={onHint}
+        disabled={answerVisible}
+      >
+        {nextLabel}
+      </button>
     </div>
   );
 }
