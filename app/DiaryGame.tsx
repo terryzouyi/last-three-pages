@@ -1475,7 +1475,6 @@ export default function DiaryGame() {
         <section className="closed-book" aria-labelledby="game-title">
           <div className="cover-wear cover-wear-one" />
           <div className="cover-wear cover-wear-two" />
-          <div className="cover-cord" aria-hidden="true" />
           <p className="cover-owner">顾澄</p>
           <h1 id="game-title">最后三页</h1>
           <p className="cover-years">2004 · 10 · 03 —</p>
@@ -1533,7 +1532,7 @@ export default function DiaryGame() {
         <div className="book-toolbar" aria-label="日记工具">
           <button
             type="button"
-            className="corner-action close-book-action"
+            className="reader-exit"
             onClick={() => {
               setDrawerOpen(false);
               setOpenTrace(null);
@@ -1541,14 +1540,15 @@ export default function DiaryGame() {
             }}
             aria-label="合上日记并保存书签"
           >
-            <span aria-hidden="true">↙</span>
-            <strong>合上日记</strong>
-            <small>自动夹入书签</small>
+            <span aria-hidden="true">‹</span>
+            返回封面
           </button>
-          <div className="toolbar-progress">
-            <div className="progress-copy">
+          <div className="reader-location">
+            <div>
               <span>{pageLabel}</span>
-              <b>{progress}%</b>
+              <small>
+                第 {currentPage + 1} 页，共 {pages.length} 页
+              </small>
             </div>
             <div
               className="reading-progress"
@@ -1556,23 +1556,18 @@ export default function DiaryGame() {
             >
               <span style={{ width: `${progress}%` }} />
             </div>
-            <p>
-              已完成 {completed.length}/4 次推理 · 发现{" "}
-              {revealedTraces.length}/{TRACE_TOTAL} 处纸页痕迹
-            </p>
           </div>
           <button
             type="button"
-            className={`corner-action evidence-action ${
+            className={`reader-notes ${
               drawerOpen ? "active" : ""
             }`}
             onClick={() => setDrawerOpen((value) => !value)}
             aria-expanded={drawerOpen}
             aria-controls="evidence-drawer"
           >
-            <span aria-hidden="true">↗</span>
-            <strong>页边摘录</strong>
-            <small>{collected.length} 条已收集</small>
+            页边摘录
+            <b>{collected.length}</b>
           </button>
         </div>
 
@@ -1666,55 +1661,33 @@ export default function DiaryGame() {
           <div className="page-controls" aria-label="翻页">
             <button
               type="button"
-              className="nav-action previous-action"
+              className="page-turn previous-action"
               onClick={goPrevious}
               disabled={currentPage === 0}
               aria-label="上一页"
             >
-              <span className="nav-arrow" aria-hidden="true">
-                ←
-              </span>
-              <span>
-                <small>回看线索</small>
-                <strong>上一页</strong>
-              </span>
-              <kbd>←</kbd>
+              <span aria-hidden="true">←</span>
+              上一页
             </button>
             <div className="control-guidance">
-              <span>
-                {isDeduction(page) && !completed.includes(page.id)
-                  ? "本页暂时不能继续"
-                  : page.kind === "final"
-                    ? "日记到这里结束"
-                    : "阅读提示"}
-              </span>
               <strong>
                 {isDeduction(page) && !completed.includes(page.id)
-                  ? "完成页边推理，右侧书签才会松开"
+                  ? "完成本页推理后继续"
                   : page.kind === "final"
-                    ? "请完成最后的证据结论"
-                    : "点击正文中的任何句子，都可以收入摘录"}
+                    ? "日记到这里结束"
+                    : `${revealedTraces.length}/${TRACE_TOTAL} 处纸页痕迹 · ${completed.length}/4 次推理`}
               </strong>
+              <span>键盘方向键也可以翻页</span>
             </div>
             <button
               type="button"
-              className="nav-action next-action"
+              className="page-turn next-action"
               onClick={goNext}
               disabled={!canMoveForward}
               aria-label="下一页"
             >
-              <kbd>→</kbd>
-              <span>
-                <small>
-                  {isDeduction(page) && !completed.includes(page.id)
-                    ? "推理未完成"
-                    : "继续阅读"}
-                </small>
-                <strong>下一页</strong>
-              </span>
-              <span className="nav-arrow" aria-hidden="true">
-                →
-              </span>
+              下一页
+              <span aria-hidden="true">→</span>
             </button>
           </div>
         )}
@@ -1806,30 +1779,35 @@ function ReadingSpread({
 
   return (
     <div className="reading-spread">
-      <p className="chapter-label">{page.chapter}</p>
-      <p className="margin-instruction">{page.margin}</p>
-      {page.trace && (
-        <div className={`page-trace ${traceOpen ? "open" : ""}`}>
+      <header className="spread-header">
+        <div>
+          <p className="chapter-label">{page.chapter}</p>
+          <p className="margin-instruction">{page.margin}</p>
+        </div>
+        {page.trace && (
           <button
-            className={`trace-corner ${traceRevealed ? "discovered" : ""}`}
+            className={`trace-trigger ${traceRevealed ? "discovered" : ""}`}
             type="button"
             onClick={() => onToggleTrace(page.trace!.id)}
             aria-expanded={traceOpen}
           >
-            <span aria-hidden="true">{traceRevealed ? "⌁" : "!"}</span>
-            <strong>{traceRevealed ? "纸页痕迹" : "翻开折角"}</strong>
-            <small>{traceOpen ? "收起" : traceRevealed ? "再次查看" : "这里不太平整"}</small>
+            <span aria-hidden="true" />
+            {traceOpen
+              ? "收起页边痕迹"
+              : traceRevealed
+                ? "查看页边痕迹"
+                : "这页有一道折痕"}
           </button>
-          {traceOpen && (
-            <aside className="trace-note" aria-live="polite">
-              <p className="trace-label">纸页本身留下的线索</p>
-              <h3>{page.trace.title}</h3>
-              <p>{page.trace.text}</p>
-              <blockquote>{page.trace.thought}</blockquote>
-              <small>这类痕迹不进入证据摘录，也不增加答题条件。</small>
-            </aside>
-          )}
-        </div>
+        )}
+      </header>
+      {page.trace && traceOpen && (
+        <aside className="trace-note" aria-live="polite">
+          <p className="trace-label">纸页留下的痕迹</p>
+          <h3>{page.trace.title}</h3>
+          <p>{page.trace.text}</p>
+          <blockquote>{page.trace.thought}</blockquote>
+          <small>不进入证据摘录，也不会增加答题条件。</small>
+        </aside>
       )}
       <div className="entries-grid">
         {page.entries.map((entry) => (

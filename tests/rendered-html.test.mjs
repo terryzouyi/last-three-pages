@@ -53,4 +53,8 @@ test("the diary contains the complete evidence and conclusion loop", async () =>
   assert.match(source, /从书签处继续/);
   assert.match(source, /我在页边停了一下/);
   assert.match(source, /last-three-pages-diary-v1/);
+  assert.match(source, /reader-location/);
+  assert.match(source, /trace-trigger/);
+  assert.match(source, /page-turn/);
+  assert.doesNotMatch(source, /corner-action/);
 });
