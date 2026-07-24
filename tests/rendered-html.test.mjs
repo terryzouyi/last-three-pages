@@ -112,7 +112,7 @@ test("the diary contains the complete evidence and conclusion loop", async () =>
   assert.match(source, /不能仅凭这些文字确定代写者/);
 });
 
-test("the diary has adaptive music, interaction sounds, and persistent controls", async () => {
+test("the diary has adaptive horror ambience, interaction sounds, and persistent controls", async () => {
   const [source, audioSource] = await Promise.all([
     loadDiarySource(),
     loadAudioSource(),
@@ -130,7 +130,10 @@ test("the diary has adaptive music, interaction sounds, and persistent controls"
   assert.match(audioSource, /uneasy:/);
   assert.match(audioSource, /dread:/);
   assert.match(audioSource, /ending:/);
-  assert.match(audioSource, /playMotif/);
+  assert.match(audioSource, /playAmbientTexture/);
+  assert.match(audioSource, /duckRoom/);
+  assert.match(audioSource, /playKnock/);
+  assert.doesNotMatch(audioSource, /motif:/);
 });
 
 test("every puzzle is solvable from earlier, internally consistent evidence", async () => {

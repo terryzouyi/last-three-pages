@@ -1850,7 +1850,7 @@ function SoundControl({
   const description = !enabled
     ? "声音已关闭"
     : ready
-      ? "环境音乐与音效已开启"
+      ? "雨夜声场与互动音效已开启"
       : "声音将在首次互动后开启";
 
   return (

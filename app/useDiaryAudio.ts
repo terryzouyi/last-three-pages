@@ -40,6 +40,7 @@ type AudioGraph = {
   droneB: OscillatorNode;
   droneAGain: GainNode;
   droneBGain: GainNode;
+  droneFilter: BiquadFilterNode;
   rain: AudioBufferSourceNode;
   rainFilter: BiquadFilterNode;
   rainGain: GainNode;
@@ -59,65 +60,65 @@ const moodSettings: Record<
     harmonyLevel: number;
     rainLevel: number;
     rainFrequency: number;
+    droneFilter: number;
     lfoRate: number;
-    motif: number[];
-    motifInterval: number;
+    textureDelay: [number, number];
   }
 > = {
   cover: {
-    droneA: 49,
-    droneB: 73.42,
-    droneLevel: 0.014,
-    harmonyLevel: 0.008,
-    rainLevel: 0.038,
-    rainFrequency: 840,
-    lfoRate: 0.075,
-    motif: [],
-    motifInterval: 9000,
+    droneA: 46.25,
+    droneB: 46.58,
+    droneLevel: 0.012,
+    harmonyLevel: 0.009,
+    rainLevel: 0.052,
+    rainFrequency: 980,
+    droneFilter: 220,
+    lfoRate: 0.045,
+    textureDelay: [15000, 24000],
   },
   quiet: {
-    droneA: 55,
-    droneB: 82.41,
-    droneLevel: 0.018,
-    harmonyLevel: 0.011,
-    rainLevel: 0.028,
-    rainFrequency: 1050,
-    lfoRate: 0.085,
-    motif: [110, 164.81, 123.47, 130.81],
-    motifInterval: 8800,
+    droneA: 49,
+    droneB: 49.36,
+    droneLevel: 0.013,
+    harmonyLevel: 0.01,
+    rainLevel: 0.037,
+    rainFrequency: 1120,
+    droneFilter: 230,
+    lfoRate: 0.052,
+    textureDelay: [14000, 23000],
   },
   uneasy: {
-    droneA: 51.91,
-    droneB: 73.42,
-    droneLevel: 0.024,
+    droneA: 46.25,
+    droneB: 48.74,
+    droneLevel: 0.019,
     harmonyLevel: 0.014,
-    rainLevel: 0.032,
-    rainFrequency: 820,
-    lfoRate: 0.12,
-    motif: [103.83, 146.83, 116.54, 138.59],
-    motifInterval: 7200,
+    rainLevel: 0.028,
+    rainFrequency: 760,
+    droneFilter: 195,
+    lfoRate: 0.085,
+    textureDelay: [9000, 16000],
   },
   dread: {
-    droneA: 43.65,
-    droneB: 61.74,
-    droneLevel: 0.032,
+    droneA: 41.2,
+    droneB: 43.38,
+    droneLevel: 0.026,
     harmonyLevel: 0.019,
-    rainLevel: 0.037,
-    rainFrequency: 620,
-    lfoRate: 0.18,
-    motif: [87.31, 123.47, 92.5, 116.54],
-    motifInterval: 5900,
+    rainLevel: 0.018,
+    rainFrequency: 540,
+    droneFilter: 165,
+    lfoRate: 0.14,
+    textureDelay: [6500, 10500],
   },
   ending: {
-    droneA: 55,
-    droneB: 73.42,
-    droneLevel: 0.015,
-    harmonyLevel: 0.009,
-    rainLevel: 0.012,
-    rainFrequency: 1320,
-    lfoRate: 0.06,
-    motif: [110, 164.81, 130.81, 220],
-    motifInterval: 9800,
+    droneA: 48.75,
+    droneB: 49,
+    droneLevel: 0.008,
+    harmonyLevel: 0.006,
+    rainLevel: 0.007,
+    rainFrequency: 1380,
+    droneFilter: 185,
+    lfoRate: 0.035,
+    textureDelay: [19000, 29000],
   },
 };
 
@@ -161,8 +162,8 @@ function buildAudioGraph(context: AudioContext): AudioGraph {
 
   const droneFilter = context.createBiquadFilter();
   droneFilter.type = "lowpass";
-  droneFilter.frequency.value = 540;
-  droneFilter.Q.value = 0.7;
+  droneFilter.frequency.value = moodSettings.cover.droneFilter;
+  droneFilter.Q.value = 0.42;
   droneFilter.connect(music);
 
   const droneA = context.createOscillator();
@@ -170,10 +171,9 @@ function buildAudioGraph(context: AudioContext): AudioGraph {
   const droneAGain = context.createGain();
   const droneBGain = context.createGain();
   droneA.type = "sine";
-  droneB.type = "triangle";
+  droneB.type = "sine";
   droneA.frequency.value = moodSettings.cover.droneA;
   droneB.frequency.value = moodSettings.cover.droneB;
-  droneB.detune.value = -7;
   droneAGain.gain.value = moodSettings.cover.droneLevel;
   droneBGain.gain.value = moodSettings.cover.harmonyLevel;
   droneA.connect(droneAGain).connect(droneFilter);
@@ -213,6 +213,7 @@ function buildAudioGraph(context: AudioContext): AudioGraph {
     droneB,
     droneAGain,
     droneBGain,
+    droneFilter,
     rain,
     rainFilter,
     rainGain,
@@ -229,6 +230,11 @@ function applyMood(graph: AudioGraph, mood: DiaryAudioMood) {
   graph.droneB.frequency.setTargetAtTime(settings.droneB, now, 1.35);
   graph.droneAGain.gain.setTargetAtTime(settings.droneLevel, now, 0.9);
   graph.droneBGain.gain.setTargetAtTime(settings.harmonyLevel, now, 0.9);
+  graph.droneFilter.frequency.setTargetAtTime(
+    settings.droneFilter,
+    now,
+    1.15,
+  );
   graph.rainGain.gain.setTargetAtTime(settings.rainLevel, now, 1.1);
   graph.rainFilter.frequency.setTargetAtTime(
     settings.rainFrequency,
@@ -295,34 +301,115 @@ function playNoise(
   source.start(start, Math.random() * availableOffset, duration);
 }
 
-function playMotif(graph: AudioGraph, mood: DiaryAudioMood) {
-  const notes = moodSettings[mood].motif;
-  if (notes.length === 0) return;
+function playNoiseSwell(
+  graph: AudioGraph,
+  start: number,
+  duration: number,
+  level: number,
+  frequency: number,
+) {
+  const source = graph.context.createBufferSource();
+  const filter = graph.context.createBiquadFilter();
+  const gain = graph.context.createGain();
+  source.buffer = graph.noiseBuffer;
+  source.playbackRate.value = 0.46;
+  filter.type = "bandpass";
+  filter.frequency.value = frequency;
+  filter.Q.value = 0.7;
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(level, start + duration * 0.76);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  source.connect(filter).connect(gain).connect(graph.sfx);
+  source.start(start, 0, Math.min(duration, graph.noiseBuffer.duration));
+}
 
-  const now = graph.context.currentTime + 0.08;
-  notes.forEach((frequency, index) => {
-    const start = now + index * (mood === "dread" ? 0.66 : 0.82);
-    const duration = mood === "ending" ? 2.4 : 1.8;
-    playTone(
-      graph,
-      frequency,
-      start,
-      duration,
-      mood === "dread" ? 0.017 : 0.014,
-      graph.music,
-      index % 2 === 0 ? "sine" : "triangle",
-      frequency * (mood === "dread" && index === notes.length - 1 ? 0.985 : 1),
-    );
-    playTone(
-      graph,
-      frequency * 2,
-      start + 0.012,
-      duration * 0.72,
-      0.0045,
-      graph.music,
-      "sine",
-    );
-  });
+function playKnock(
+  graph: AudioGraph,
+  start: number,
+  level = 0.055,
+  frequency = 72,
+) {
+  playNoise(graph, start, 0.075, level * 0.72, "lowpass", 330, 0.62);
+  playTone(
+    graph,
+    frequency,
+    start,
+    0.22,
+    level,
+    graph.sfx,
+    "sine",
+    frequency * 0.72,
+  );
+}
+
+function duckRoom(graph: AudioGraph, start: number, hold: number) {
+  graph.music.gain.cancelScheduledValues(start);
+  graph.music.gain.setValueAtTime(graph.music.gain.value, start);
+  graph.music.gain.linearRampToValueAtTime(0.08, start + 0.12);
+  graph.music.gain.setValueAtTime(0.08, start + hold);
+  graph.music.gain.linearRampToValueAtTime(1, start + hold + 1.7);
+}
+
+function playAmbientTexture(graph: AudioGraph, mood: DiaryAudioMood) {
+  const now = graph.context.currentTime + 0.04;
+  const variant = Math.random();
+
+  if (mood === "cover") {
+    playNoiseSwell(graph, now, 1.8, 0.012, 420);
+    if (variant > 0.64) {
+      playTone(graph, 63, now + 0.48, 1.25, 0.012, graph.music, "sine", 51);
+    }
+    return;
+  }
+
+  if (mood === "quiet") {
+    if (variant < 0.58) {
+      playNoiseSwell(graph, now, 1.15, 0.014, 520);
+      playTone(graph, 69, now + 0.22, 0.82, 0.012, graph.music, "sine", 57);
+    } else {
+      playNoise(graph, now, 0.035, 0.017, "highpass", 2100, 1.22);
+      playNoise(graph, now + 0.94, 0.03, 0.012, "highpass", 1900, 1.08);
+    }
+    return;
+  }
+
+  if (mood === "uneasy") {
+    if (variant < 0.52) {
+      playKnock(graph, now, 0.019, 76);
+      if (variant < 0.21) playKnock(graph, now + 0.82, 0.014, 71);
+    } else {
+      playNoiseSwell(graph, now, 1.45, 0.018, 710);
+      playNoise(graph, now + 1.1, 0.16, 0.014, "highpass", 1500, 0.7);
+    }
+    return;
+  }
+
+  if (mood === "dread") {
+    if (variant < 0.62) {
+      playTone(graph, 46, now, 0.24, 0.034, graph.music, "sine", 39);
+      playTone(
+        graph,
+        43,
+        now + 0.43,
+        0.2,
+        0.024,
+        graph.music,
+        "sine",
+        37,
+      );
+      playNoise(graph, now, 0.09, 0.017, "lowpass", 220, 0.5);
+      playNoise(graph, now + 0.43, 0.075, 0.012, "lowpass", 210, 0.48);
+    } else {
+      playNoise(graph, now, 0.028, 0.024, "highpass", 2500, 1.32);
+      playNoise(graph, now + 0.78, 0.026, 0.019, "highpass", 2360, 1.2);
+      playTone(graph, 2470, now + 0.06, 1.65, 0.0018, graph.music, "sine");
+    }
+    return;
+  }
+
+  if (variant > 0.7) {
+    playNoiseSwell(graph, now, 1.65, 0.008, 860);
+  }
 }
 
 function playCue(graph: AudioGraph, cue: DiarySoundCue) {
@@ -330,64 +417,73 @@ function playCue(graph: AudioGraph, cue: DiarySoundCue) {
 
   switch (cue) {
     case "open":
-      playNoise(graph, now, 0.42, 0.12, "bandpass", 780, 0.72);
-      playTone(graph, 92, now, 0.36, 0.08, graph.sfx, "sine", 69);
+      playNoise(graph, now, 0.48, 0.11, "bandpass", 720, 0.66);
+      playTone(graph, 71, now + 0.04, 0.42, 0.052, graph.sfx, "sine", 49);
       break;
     case "close":
-      playNoise(graph, now, 0.18, 0.09, "lowpass", 520, 0.76);
-      playTone(graph, 73, now + 0.03, 0.32, 0.075, graph.sfx, "sine", 55);
+      playNoise(graph, now, 0.2, 0.082, "lowpass", 470, 0.72);
+      playTone(graph, 64, now + 0.03, 0.34, 0.055, graph.sfx, "sine", 43);
       break;
     case "page":
-      playNoise(graph, now, 0.22, 0.11, "bandpass", 1450, 1.12);
-      playNoise(graph, now + 0.055, 0.25, 0.075, "bandpass", 820, 0.88);
+      playNoise(graph, now, 0.24, 0.1, "bandpass", 1380, 1.04);
+      playNoise(graph, now + 0.06, 0.28, 0.064, "bandpass", 760, 0.82);
       break;
     case "collect":
-      playNoise(graph, now, 0.16, 0.085, "highpass", 1650, 1.32);
-      playTone(graph, 620, now + 0.03, 0.12, 0.035, graph.sfx, "triangle", 510);
+      playNoise(graph, now, 0.21, 0.073, "highpass", 1480, 0.88);
+      playNoise(graph, now + 0.16, 0.045, 0.026, "lowpass", 380, 0.62);
       break;
     case "erase":
-      playNoise(graph, now, 0.28, 0.075, "highpass", 940, 0.72);
-      playTone(graph, 330, now + 0.02, 0.13, 0.025, graph.sfx, "sine", 245);
+      playNoise(graph, now, 0.34, 0.07, "highpass", 860, 0.64);
+      playNoise(graph, now + 0.08, 0.18, 0.026, "bandpass", 540, 0.52);
       break;
     case "pin":
-      playTone(graph, 760, now, 0.1, 0.045, graph.sfx, "triangle", 620);
-      playTone(graph, 1040, now + 0.055, 0.08, 0.022, graph.sfx, "sine", 820);
+      playNoise(graph, now, 0.045, 0.048, "highpass", 1900, 1.18);
+      playTone(graph, 118, now, 0.16, 0.026, graph.sfx, "sine", 86);
       break;
     case "unpin":
-      playTone(graph, 570, now, 0.12, 0.035, graph.sfx, "triangle", 430);
+      playNoise(graph, now, 0.065, 0.038, "bandpass", 880, 0.84);
+      playTone(graph, 102, now, 0.14, 0.02, graph.sfx, "sine", 74);
       break;
     case "correct":
-      playTone(graph, 146.83, now, 0.62, 0.055, graph.sfx, "sine");
-      playTone(graph, 174.61, now + 0.14, 0.72, 0.047, graph.sfx, "sine");
-      playTone(graph, 220, now + 0.3, 0.92, 0.04, graph.sfx, "triangle");
+      duckRoom(graph, now, 0.5);
+      playNoiseSwell(graph, now + 0.05, 0.9, 0.026, 390);
+      playKnock(graph, now + 0.52, 0.045, 64);
       break;
     case "wrong":
-      playTone(graph, 82.41, now, 0.38, 0.085, graph.sfx, "sine", 55);
-      playNoise(graph, now, 0.16, 0.055, "lowpass", 280, 0.58);
+      playNoise(graph, now, 0.12, 0.058, "bandpass", 620, 0.58);
+      playTone(graph, 61, now + 0.02, 0.3, 0.052, graph.sfx, "sine", 42);
       break;
     case "trace":
-      playNoise(graph, now, 0.46, 0.07, "bandpass", 1180, 0.65);
-      playTone(graph, 392, now + 0.08, 0.55, 0.032, graph.sfx, "sine", 523.25);
+      playNoiseSwell(graph, now, 0.72, 0.048, 910);
+      playNoise(graph, now + 0.48, 0.28, 0.036, "highpass", 1320, 0.62);
+      playKnock(graph, now + 0.86, 0.019, 69);
       break;
     case "hint":
-      playTone(graph, 659.25, now, 0.28, 0.033, graph.sfx, "sine");
-      playTone(graph, 783.99, now + 0.12, 0.36, 0.026, graph.sfx, "sine");
+      playNoise(graph, now, 0.04, 0.035, "highpass", 1780, 1.06);
+      playNoise(graph, now + 0.16, 0.035, 0.026, "highpass", 1650, 0.94);
+      playTone(graph, 132, now + 0.02, 0.16, 0.018, graph.sfx, "sine", 105);
       break;
     case "crossout":
-      playNoise(graph, now, 0.42, 0.085, "highpass", 1250, 0.72);
-      playTone(graph, 196, now + 0.04, 0.22, 0.024, graph.sfx, "triangle", 164.81);
+      playNoise(graph, now, 0.48, 0.078, "highpass", 1180, 0.64);
+      playNoise(graph, now + 0.18, 0.22, 0.031, "bandpass", 560, 0.56);
       break;
     case "write":
-      playNoise(graph, now, 0.32, 0.078, "highpass", 1580, 0.78);
-      playTone(graph, 392, now + 0.18, 0.42, 0.027, graph.sfx, "sine", 440);
+      duckRoom(graph, now, 1.7);
+      playNoise(graph, now, 0.38, 0.073, "highpass", 1440, 0.7);
+      playNoise(graph, now + 0.34, 0.29, 0.052, "highpass", 1310, 0.66);
+      playKnock(graph, now + 0.98, 0.034, 67);
+      playKnock(graph, now + 1.36, 0.029, 64);
+      playKnock(graph, now + 1.76, 0.024, 61);
       break;
     case "reveal":
-      playTone(graph, 110, now, 1.2, 0.055, graph.sfx, "sine");
-      playTone(graph, 146.83, now + 0.12, 1.3, 0.042, graph.sfx, "sine");
-      playTone(graph, 220, now + 0.28, 1.45, 0.032, graph.sfx, "triangle");
+      duckRoom(graph, now, 1.15);
+      playNoiseSwell(graph, now, 1.42, 0.044, 470);
+      playTone(graph, 54, now + 0.88, 0.82, 0.06, graph.sfx, "sine", 36);
+      playKnock(graph, now + 1.28, 0.036, 62);
       break;
     case "select":
-      playTone(graph, 440, now, 0.13, 0.03, graph.sfx, "triangle", 392);
+      playNoise(graph, now, 0.052, 0.032, "highpass", 1420, 0.92);
+      playTone(graph, 104, now, 0.13, 0.017, graph.sfx, "sine", 82);
       break;
   }
 }
@@ -401,8 +497,7 @@ export function useDiaryAudio(mood: DiaryAudioMood) {
   const moodRef = useRef(mood);
   const enabledRef = useRef(enabled);
   const volumeRef = useRef(volume);
-  const motifTimeoutRef = useRef<number | null>(null);
-  const motifIntervalRef = useRef<number | null>(null);
+  const textureTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     moodRef.current = mood;
@@ -416,14 +511,10 @@ export function useDiaryAudio(mood: DiaryAudioMood) {
     volumeRef.current = volume;
   }, [volume]);
 
-  const clearMotifLoop = useCallback(() => {
-    if (motifTimeoutRef.current !== null) {
-      window.clearTimeout(motifTimeoutRef.current);
-      motifTimeoutRef.current = null;
-    }
-    if (motifIntervalRef.current !== null) {
-      window.clearInterval(motifIntervalRef.current);
-      motifIntervalRef.current = null;
+  const clearTextureLoop = useCallback(() => {
+    if (textureTimerRef.current !== null) {
+      window.clearTimeout(textureTimerRef.current);
+      textureTimerRef.current = null;
     }
   }, []);
 
@@ -472,7 +563,7 @@ export function useDiaryAudio(mood: DiaryAudioMood) {
 
     if (enabledRef.current) {
       setEnabled(false);
-      clearMotifLoop();
+      clearTextureLoop();
       if (graph) {
         const now = graph.context.currentTime;
         graph.master.gain.cancelScheduledValues(now);
@@ -484,7 +575,7 @@ export function useDiaryAudio(mood: DiaryAudioMood) {
     setEnabled(true);
     enabledRef.current = true;
     unlock();
-  }, [clearMotifLoop, ready, unlock]);
+  }, [clearTextureLoop, ready, unlock]);
 
   const setVolume = useCallback(
     (nextVolume: number) => {
@@ -535,24 +626,26 @@ export function useDiaryAudio(mood: DiaryAudioMood) {
   }, [mood]);
 
   useEffect(() => {
-    clearMotifLoop();
+    clearTextureLoop();
     const graph = graphRef.current;
-    const settings = moodSettings[mood];
-    if (!ready || !enabled || !graph || settings.motif.length === 0) return;
+    if (!ready || !enabled || !graph) return;
 
-    motifTimeoutRef.current = window.setTimeout(() => {
-      if (graph.context.state === "running" && enabledRef.current) {
-        playMotif(graph, moodRef.current);
-      }
-    }, 1300);
-    motifIntervalRef.current = window.setInterval(() => {
-      if (graph.context.state === "running" && enabledRef.current) {
-        playMotif(graph, moodRef.current);
-      }
-    }, settings.motifInterval);
+    const scheduleNextTexture = () => {
+      const [minimum, maximum] =
+        moodSettings[moodRef.current].textureDelay;
+      const delay = minimum + Math.random() * (maximum - minimum);
+      textureTimerRef.current = window.setTimeout(() => {
+        if (!enabledRef.current) return;
+        if (graph.context.state === "running") {
+          playAmbientTexture(graph, moodRef.current);
+        }
+        scheduleNextTexture();
+      }, delay);
+    };
 
-    return clearMotifLoop;
-  }, [clearMotifLoop, enabled, mood, ready]);
+    scheduleNextTexture();
+    return clearTextureLoop;
+  }, [clearTextureLoop, enabled, mood, ready]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -571,7 +664,7 @@ export function useDiaryAudio(mood: DiaryAudioMood) {
 
   useEffect(
     () => () => {
-      clearMotifLoop();
+      clearTextureLoop();
       const graph = graphRef.current;
       if (!graph) return;
       graph.droneA.stop();
@@ -581,7 +674,7 @@ export function useDiaryAudio(mood: DiaryAudioMood) {
       void graph.context.close();
       graphRef.current = null;
     },
-    [clearMotifLoop],
+    [clearTextureLoop],
   );
 
   return useMemo(
